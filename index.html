@@ -1,0 +1,2235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConnectTrack — Church Visitor Records</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-light:#F5E6C0;--gold-dark:#9A7A2E;
+  --deep:#1A1207;--dark:#2C200A;--mid:#6B5A3E;--soft:#F9F4EB;--white:#FFFDF8;
+  --first:#0D9488;--first-bg:#F0FDFA;--first-light:#CCFBF1;--first-dark:#0F766E;
+  --second:#7C3AED;--second-bg:#F5F3FF;--second-light:#EDE9FE;--second-dark:#6D28D9;
+  --danger:#DC2626;--success:#059669;
+  --border:#E8DCC8;--shadow:0 4px 24px rgba(26,18,7,.09);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--soft);color:var(--deep);min-height:100vh}
+.app{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:292px;background:var(--deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.2) transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px}
+
+/* Brand */
+.brand{padding:24px 20px 18px;border-bottom:1px solid rgba(201,168,76,.13);flex-shrink:0}
+.brand-icon{width:34px;height:34px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:9px}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#FFFDF8;line-height:1}
+.brand-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;letter-spacing:.05em}
+
+/* Nav */
+.nav{padding:14px 12px 8px;display:flex;flex-direction:column;gap:3px}
+.nav-section-label{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.22);padding:9px 11px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500;color:rgba(255,255,255,.48);border:none;background:none;width:100%;text-align:left;font-family:'Outfit',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82)}
+.nav-item.active{background:rgba(201,168,76,.15);color:var(--gold)}
+.nav-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0}
+
+/* ── SIDEBAR: TEAM CLICKABLE ── */
+.sb-member-clickable{cursor:pointer}
+.sb-member-clickable:hover{background:rgba(255,255,255,.09)}
+
+/* ── SIDEBAR: TEAM SECTION ── */
+.sb-team-section{border-top:1px solid rgba(201,168,76,.1);flex-shrink:0;padding-bottom:4px}
+.sb-team-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px}
+.sb-team-hdr-title{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.32)}
+.sb-add-btn{font-size:10px;font-weight:600;color:var(--gold);background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.22);border-radius:6px;padding:3px 9px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.sb-add-btn:hover{background:rgba(201,168,76,.25)}
+.sb-team-body{padding:0 12px 8px}
+
+/* Team group heads */
+.sb-tg{margin-bottom:8px}
+.sb-tg-head{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-radius:8px;margin-bottom:5px}
+.sb-tg-first-head{background:rgba(13,148,136,.15)}
+.sb-tg-second-head{background:rgba(124,58,237,.15)}
+.sb-tg-both-head{background:rgba(201,168,76,.1)}
+.sb-tg-lbl{font-size:10px;font-weight:700}
+.sb-tg-first-head .sb-tg-lbl{color:#5EEAD4}
+.sb-tg-second-head .sb-tg-lbl{color:#C4B5FD}
+.sb-tg-both-head .sb-tg-lbl{color:var(--gold)}
+.sb-tg-cnt{font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px}
+.sb-tg-first-head .sb-tg-cnt{background:rgba(13,148,136,.28);color:#99F6E4}
+.sb-tg-second-head .sb-tg-cnt{background:rgba(124,58,237,.28);color:#DDD6FE}
+.sb-tg-both-head .sb-tg-cnt{background:rgba(201,168,76,.2);color:var(--gold)}
+
+/* Team member row */
+.sb-member{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;cursor:pointer;transition:background .2s;margin-bottom:3px}
+.sb-member:hover{background:rgba(255,255,255,.07)}
+.sb-m-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.sb-m-info{flex:1;min-width:0}
+.sb-m-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-m-role{font-size:9px;color:rgba(255,255,255,.32);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-m-del{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.28);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.sb-m-del:hover{background:rgba(220,38,38,.25);color:#FCA5A5;border-color:rgba(220,38,38,.3)}
+.sb-no-team{font-size:11px;color:rgba(255,255,255,.22);text-align:center;padding:12px 0}
+
+/* Footer */
+.sb-footer{padding:12px 14px;border-top:1px solid rgba(201,168,76,.1);flex-shrink:0;margin-top:auto}
+.service-badge{display:flex;align-items:center;gap:9px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.16);border-radius:10px;padding:10px 13px}
+.service-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.service-label{font-size:9px;color:rgba(255,255,255,.32)}
+.service-date{font-size:11px;color:var(--gold);font-weight:600}
+
+/* ── MAIN ── */
+.main{flex:1;margin-left:292px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-date{font-size:12px;color:var(--mid);background:var(--soft);padding:5px 13px;border-radius:20px;border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Outfit',sans-serif}
+.btn-gold{background:var(--gold);color:var(--deep)}
+.btn-gold:hover{background:var(--gold-dark);color:white;transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.3)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--mid)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-teal{background:var(--first);color:white}
+.btn-teal:hover{background:var(--first-dark);transform:translateY(-1px)}
+.btn-violet{background:var(--second);color:white}
+.btn-violet:hover{background:var(--second-dark);transform:translateY(-1px)}
+
+/* ── PAGES ── */
+.page{display:none;padding:26px 28px;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px}
+.worker-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:#F0FDF4;color:#059669;border:1px solid #BBF7D0}
+.worker-badge svg{width:10px;height:10px}
+.stat-card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.stat-icon svg{width:22px;height:22px}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-label{font-size:12px;color:var(--mid)}
+.stat-trend{font-size:11px;margin-top:5px;font-weight:600}
+
+/* ── TIMER SPLIT ── */
+.timer-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+
+/* ── CARD ── */
+.card{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600}
+.card-badge{font-size:11px;font-weight:600;padding:3px 11px;border-radius:20px}
+.badge-first{background:var(--first-bg);color:var(--first)}
+.badge-second{background:var(--second-bg);color:var(--second)}
+
+/* Assigned-to strip inside card header */
+.assigned-strip{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.assigned-label{font-size:10px;color:var(--mid);font-weight:500;flex-shrink:0;white-space:nowrap}
+.assigned-avatars{display:flex;align-items:center;flex-wrap:nowrap}
+.assigned-avatar{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:2px solid var(--white);margin-left:-6px;flex-shrink:0}
+.assigned-avatars .assigned-avatar:first-child{margin-left:0}
+.assigned-more{font-size:10px;color:var(--mid);margin-left:4px}
+
+/* Visitor list in timer cards */
+.visitor-list{padding:0}
+.v-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #F5EFE5;transition:background .15s;cursor:pointer}
+.v-row:last-child{border-bottom:none}
+.v-row:hover{background:var(--soft)}
+.v-avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.v-info{flex:1;min-width:0}
+.v-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v-meta{font-size:11px;color:var(--mid);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.v-date{font-size:10px;color:var(--mid)}
+.v-source{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--soft);color:var(--mid);border:1px solid var(--border);white-space:nowrap}
+.v-actions{display:flex;gap:5px;opacity:0;transition:opacity .2s}
+.v-row:hover .v-actions{opacity:1}
+.v-action-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--white);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--mid)}
+.v-action-btn:hover{background:var(--soft);border-color:var(--gold)}
+.v-action-btn.del:hover{background:#FEF2F2;color:var(--danger);border-color:#FECACA}
+.v-empty{text-align:center;padding:36px 20px;color:var(--mid)}
+.v-empty-icon{font-size:32px;margin-bottom:8px}
+.v-empty-text{font-size:13px}
+
+/* ── RECENT TABLE (dashboard bottom) ── */
+.search-box{display:flex;align-items:center;gap:7px;background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:7px 13px;font-size:12px;color:var(--mid);min-width:200px}
+.search-box input{background:none;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:12px;color:var(--deep);width:100%}
+.search-box input::placeholder{color:var(--mid)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--soft);padding:11px 18px;text-align:left;font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:13px 18px;border-bottom:1px solid #F5EFE5;font-size:12px;color:var(--deep);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--soft)}
+.t-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600}
+.t-badge-first{background:var(--first-bg);color:var(--first)}
+.t-badge-second{background:var(--second-bg);color:var(--second)}
+.t-src{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:10px;background:var(--soft);color:var(--mid);border:1px solid var(--border)}
+.action-btns{display:flex;gap:5px}
+.action-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--white);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--mid)}
+.action-btn:hover{background:var(--soft);border-color:var(--gold)}
+.action-btn.del:hover{background:#FEF2F2;color:var(--danger);border-color:#FECACA}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.f-btn{padding:6px 15px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.f-btn:hover{border-color:var(--gold);color:var(--gold)}
+.f-btn.active{background:var(--gold);border-color:var(--gold);color:var(--deep)}
+
+/* ── FORM ── */
+.form-wrapper{max-width:760px;margin:0 auto}
+.form-header{text-align:center;margin-bottom:36px}
+.form-header h2{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;margin-bottom:7px}
+.form-header p{font-size:14px;color:var(--mid)}
+.form-card{background:var(--white);border-radius:22px;border:1px solid var(--border);box-shadow:0 8px 36px rgba(26,18,7,.07);overflow:hidden}
+.f-section{padding:28px 32px;border-bottom:1px solid var(--border)}
+.f-section:last-of-type{border-bottom:none}
+.f-sec-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:20px}
+.f-sec-label::after{content:'';flex:1;height:1px;background:var(--gold-light)}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.f-row.single{grid-template-columns:1fr;margin-bottom:18px}
+.f-group{display:flex;flex-direction:column;gap:7px}
+label{font-size:11px;font-weight:600;color:var(--mid);letter-spacing:.04em;text-transform:uppercase}
+input[type=text],input[type=email],input[type=tel],textarea,select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--deep);background:var(--soft);outline:none;transition:all .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
+input::placeholder,textarea::placeholder{color:#B8A98A}
+textarea{resize:vertical;min-height:80px}
+.visit-toggle{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toggle-option{position:relative;cursor:pointer}
+.toggle-option input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.toggle-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px 10px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .22s;background:var(--soft);text-align:center}
+.t-icon{font-size:22px}
+.t-title{font-size:12px;font-weight:700;color:var(--deep)}
+.t-desc{font-size:10px;color:var(--mid)}
+.toggle-option input:checked+.toggle-label{border-color:var(--gold);background:var(--gold-light);box-shadow:0 3px 14px rgba(201,168,76,.18)}
+.toggle-option input:checked+.toggle-label .t-title{color:var(--gold-dark)}
+/* Sub-option day/program selector */
+.sub-opts{display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.sub-opts.visible{display:grid}
+.sub-opts.three-col{grid-template-columns:repeat(3,1fr)}
+.sub-opt{position:relative}
+.sub-opt input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.sub-opt-lbl{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;background:var(--white);font-size:12px;font-weight:600;color:var(--mid);text-align:center}
+.sub-opt input:checked+.sub-opt-lbl{border-color:var(--gold);background:var(--gold-light);color:var(--gold-dark)}
+.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.src-option{position:relative}
+.src-option input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.src-label{display:flex;align-items:center;gap:8px;padding:11px 13px;border:1.5px solid var(--border);border-radius:11px;cursor:pointer;transition:all .2s;background:var(--soft);font-size:12px;font-weight:500;color:var(--mid)}
+.src-icon{font-size:16px}
+.src-option input:checked+.src-label{border-color:var(--gold);background:var(--gold-light);color:var(--gold-dark)}
+.f-footer{padding:20px 32px;background:var(--soft);display:flex;align-items:center;justify-content:space-between}
+.req-note{font-size:12px;color:var(--mid)}
+.req-note span{color:var(--danger)}
+.btn-submit{background:var(--gold);color:var(--deep);padding:13px 32px;border-radius:11px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.btn-submit:hover{background:var(--gold-dark);color:white;transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,.3)}
+
+/* ── TEAM MANAGEMENT MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,18,7,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:22px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(26,18,7,.22);animation:mIn .3s cubic-bezier(.17,.89,.32,1.25);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+@keyframes mIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:24px 28px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--mid);transition:all .2s}
+.modal-close:hover{background:#FEF2F2;color:var(--danger);border-color:#FECACA}
+.modal-body{padding:20px 28px;overflow-y:auto}
+.modal-footer{padding:16px 28px;background:var(--soft);border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;flex-shrink:0}
+
+/* Visitor detail modal */
+.md-row{display:flex;gap:13px;margin-bottom:13px;align-items:flex-start}
+.md-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;color:var(--mid)}
+.md-label{font-size:10px;color:var(--mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.md-value{font-size:13px;font-weight:500}
+
+/* Team list in modal */
+.team-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.tm-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--soft);transition:border-color .2s}
+.tm-card:hover{border-color:var(--gold)}
+.tm-av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.tm-info{flex:1;min-width:0}
+.tm-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-role{font-size:11px;color:var(--mid);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-phone{font-size:11px;color:var(--mid)}
+.tm-assign{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.tm-first{background:var(--first-bg);color:var(--first)}
+.tm-second{background:var(--second-bg);color:var(--second)}
+.tm-both{background:var(--gold-light);color:var(--gold-dark)}
+.tm-del{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--white);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--mid)}
+.tm-del:hover{background:#FEF2F2;color:var(--danger);border-color:#FECACA}
+
+/* Add member form inside modal */
+.add-form{background:var(--soft);border-radius:14px;border:1.5px dashed var(--border);padding:18px}
+.add-form-title{font-size:12px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.af-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.af-row.single{grid-template-columns:1fr}
+.assign-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.as-opt{position:relative}
+.as-opt input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.as-lbl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;background:var(--white);font-size:11px;font-weight:600;color:var(--mid);text-align:center}
+.as-opt input:checked+.as-lbl{border-color:var(--gold);background:var(--gold-light);color:var(--gold-dark)}
+
+/* ── MEMBER PROFILE MODAL ── */
+.mp-hero{display:flex;align-items:center;gap:16px;padding:20px 24px;background:linear-gradient(135deg,var(--deep) 0%,#2C200A 100%);border-radius:14px;margin-bottom:20px}
+.mp-av{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.mp-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:#FFFDF8}
+.mp-role{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.mp-phone{font-size:11px;color:var(--gold);margin-top:4px;font-weight:600}
+.mp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.mp-stat{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+.mp-stat-num{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;line-height:1}
+.mp-stat-lbl{font-size:10px;color:var(--mid);margin-top:3px}
+.mp-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px}
+.mp-visitor-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;border:1px solid var(--border);background:var(--soft);margin-bottom:7px;transition:border-color .2s}
+.mp-visitor-row:hover{border-color:var(--gold-light)}
+.mp-v-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.mp-v-info{flex:1;min-width:0}
+.mp-v-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-v-meta{font-size:10px;color:var(--mid);margin-top:1px}
+.mp-log-btns{display:flex;gap:5px;flex-shrink:0}
+.mp-log-btn{padding:4px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:10px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;color:var(--mid)}
+.mp-log-btn.call:hover{border-color:#0D9488;color:#0D9488;background:var(--first-bg)}
+.mp-log-btn.text:hover{border-color:#7C3AED;color:#7C3AED;background:var(--second-bg)}
+.mp-log-btn.call.logged{border-color:#0D9488;color:#0D9488;background:var(--first-bg)}
+.mp-log-btn.text.logged{border-color:#7C3AED;color:#7C3AED;background:var(--second-bg)}
+.mp-log-history{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.mp-log-entry{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F5EFE5;font-size:11px;color:var(--mid)}
+.mp-log-entry:last-child{border-bottom:none}
+.mp-log-pill{padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;flex-shrink:0}
+.mp-log-call{background:var(--first-bg);color:var(--first)}
+.mp-log-text{background:var(--second-bg);color:var(--second)}
+.mp-empty{text-align:center;padding:24px;color:var(--mid);font-size:12px;font-style:italic}
+
+/* Conditional form sections */
+.f-conditional{display:none}
+.f-conditional.visible{display:block}
+
+/* Growth track toggle */
+.gt-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gt-opt{position:relative}
+.gt-opt input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.gt-lbl{display:flex;align-items:center;gap:9px;padding:13px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .22s;background:var(--soft);font-size:13px;font-weight:600;color:var(--mid)}
+.gt-lbl-icon{font-size:18px}
+.gt-opt input:checked+.gt-lbl{border-color:var(--second);background:var(--second-light);color:var(--second-dark)}
+
+/* Dashboard filter bar */
+.dash-filter-bar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.dash-seg{display:flex;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px}
+.dash-seg-btn{padding:6px 14px;border-radius:7px;border:none;background:transparent;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;color:var(--mid);cursor:pointer;transition:all .18s;white-space:nowrap}
+.dash-seg-btn:hover{color:var(--deep)}
+.dash-seg-btn.active{background:var(--deep);color:var(--white);font-weight:600;box-shadow:0 2px 8px rgba(26,18,7,.18)}
+.dash-filter-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.dash-year-wrap{position:relative;display:flex;align-items:center}
+.dash-year-wrap svg{position:absolute;right:10px;pointer-events:none;color:var(--mid)}
+.dash-filter-select{appearance:none;-webkit-appearance:none;padding:7px 32px 7px 14px;border:1px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;color:var(--deep);background:var(--white);outline:none;cursor:pointer;transition:all .18s}
+.dash-filter-select:hover{border-color:var(--gold)}
+.dash-filter-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
+
+/* At-risk card */
+.at-risk-card{background:var(--white);border-radius:16px;border:1.5px solid #FECACA;box-shadow:0 4px 20px rgba(220,38,38,.07);overflow:hidden;margin-bottom:20px}
+.at-risk-header{padding:14px 20px;border-bottom:1px solid #FECACA;display:flex;align-items:center;justify-content:space-between;background:#FFF5F5}
+.at-risk-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#DC2626}
+.at-risk-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #FEF2F2;transition:background .15s;cursor:pointer}
+.at-risk-row:last-child{border-bottom:none}
+.at-risk-row:hover{background:#FFF5F5}
+.at-risk-months{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#FEE2E2;color:#DC2626;flex-shrink:0}
+
+/* ── IMPORT MODAL ── */
+.import-drop{border:2px dashed var(--border);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--soft)}
+.import-drop:hover,.import-drop.dragover{border-color:var(--gold);background:var(--gold-light)}
+.import-drop-icon{font-size:32px;margin-bottom:8px}
+.import-drop-text{font-size:13px;font-weight:600;color:var(--mid)}
+.import-drop-sub{font-size:11px;color:var(--mid);opacity:.7;margin-top:4px}
+.import-service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}
+.import-svc-opt{position:relative}
+.import-svc-opt input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.import-svc-lbl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .22s;background:var(--soft);font-size:11px;font-weight:600;color:var(--mid);text-align:center}
+.import-svc-lbl-icon{font-size:20px}
+.import-svc-opt input:checked+.import-svc-lbl{border-color:var(--gold);background:var(--gold-light);color:var(--gold-dark)}
+.import-preview{border-radius:12px;border:1px solid var(--border);overflow:hidden;max-height:260px;overflow-y:auto;margin-top:14px}
+.import-preview table{width:100%;font-size:11px}
+.import-preview th{font-size:9px;padding:8px 12px;background:var(--soft);position:sticky;top:0}
+.import-preview td{padding:8px 12px;border-bottom:1px solid #F5EFE5}
+.import-preview tr:last-child td{border-bottom:none}
+.import-status{font-size:12px;color:var(--mid);padding:8px 2px}
+.import-status span{font-weight:700;color:var(--deep)}
+.log-dialog-overlay{position:fixed;inset:0;background:rgba(26,18,7,.55);backdrop-filter:blur(6px);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.log-dialog-overlay.open{display:flex}
+.log-dialog{background:var(--white);border-radius:18px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(26,18,7,.28);animation:mIn .25s cubic-bezier(.17,.89,.32,1.25);overflow:hidden}
+.log-dialog-hdr{padding:20px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.log-dialog-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.log-dialog-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700}
+.log-dialog-sub{font-size:11px;color:var(--mid);margin-top:2px}
+.log-dialog-body{padding:18px 22px}
+.log-dialog-visitor{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--soft);border-radius:11px;border:1px solid var(--border);margin-bottom:14px}
+.log-dialog-footer{padding:14px 22px;background:var(--soft);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+.toast{position:fixed;bottom:28px;right:28px;background:var(--deep);color:white;padding:14px 20px;border-radius:13px;display:flex;align-items:center;gap:11px;font-size:13px;font-weight:500;box-shadow:0 12px 32px rgba(26,18,7,.22);transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.17,.89,.32,1.25);z-index:1000;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-icon{font-size:20px;flex-shrink:0}
+.toast-msg strong{display:block}
+.toast-msg span{font-size:11px;opacity:.65}
+
+/* ── TEAM PAGE ── */
+.tm-page-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.tm-page-card{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:14px}
+.tm-page-card-av{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+.tm-page-card-body{flex:1;min-width:0}
+.tm-page-card-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-page-card-role{font-size:11px;color:var(--mid);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-page-card-stats{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tm-page-pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px}
+.tm-page-visitors{background:rgba(201,168,76,.15);color:var(--gold-dark)}
+.tm-page-calls{background:var(--first-bg);color:var(--first)}
+.tm-page-texts{background:var(--second-bg);color:var(--second)}
+.tm-page-visitor-list{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.tm-page-v-row{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid #F5EFE5;cursor:pointer;transition:opacity .15s}
+.tm-page-v-row:last-child{border-bottom:none}
+.tm-page-v-row:hover{opacity:.75}
+
+/* ── PASTOR VIEW ── */
+.pastor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.pastor-big-stat{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;text-align:center}
+.pastor-big-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;line-height:1}
+.pastor-big-lbl{font-size:12px;color:var(--mid);margin-top:4px}
+.pastor-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.pastor-card{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.pastor-card-hdr{padding:14px 18px;border-bottom:1px solid var(--border);font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700}
+.pastor-card-body{padding:14px 18px}
+.pastor-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pastor-bar-label{font-size:11px;color:var(--mid);width:100px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pastor-bar-track{flex:1;height:8px;background:var(--soft);border-radius:20px;overflow:hidden}
+.pastor-bar-fill{height:100%;border-radius:20px;transition:width .4s}
+.pastor-bar-count{font-size:11px;font-weight:700;color:var(--deep);width:28px;text-align:right;flex-shrink:0}
+.pastor-insight{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:11px;background:var(--soft);border:1px solid var(--border);margin-bottom:8px}
+.pastor-insight-icon{font-size:18px;flex-shrink:0}
+.pastor-insight-text{font-size:12px;color:var(--mid);line-height:1.5}
+.pastor-insight-text strong{color:var(--deep)}
+
+/* ── AUDIT LOG ── */
+.audit-entry{display:flex;align-items:flex-start;gap:12px;padding:13px 18px;border-bottom:1px solid #F5EFE5;transition:background .15s}
+.audit-entry:hover{background:var(--soft)}
+.audit-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.audit-body{flex:1;min-width:0}
+.audit-action{font-size:12px;font-weight:700;color:var(--deep)}
+.audit-detail{font-size:11px;color:var(--mid);margin-top:2px;line-height:1.5}
+.audit-meta{font-size:10px;color:var(--mid);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.audit-who{font-weight:600;color:var(--gold-dark)}
+
+/* ── ASSIGNMENT PICKER ── */
+.assign-picker{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.assign-chip{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--soft);cursor:pointer;transition:all .2s;user-select:none}
+.assign-chip:hover{border-color:var(--gold-light)}
+.assign-chip.assigned{border-color:var(--gold);background:var(--gold-light)}
+.assign-chip-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.assign-chip-info{flex:1;min-width:0}
+.assign-chip-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.assign-chip-role{font-size:10px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.assign-chip-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.assign-chip.assigned .assign-chip-check{background:var(--gold);border-color:var(--gold-dark)}
+.assign-chip.assigned .assign-chip-check::after{content:'';width:5px;height:9px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+.username-overlay{position:fixed;inset:0;background:rgba(26,18,7,.6);backdrop-filter:blur(6px);z-index:600;display:none;align-items:center;justify-content:center;padding:20px}
+.username-overlay.open{display:flex}
+.username-box{background:var(--white);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(26,18,7,.25);animation:mIn .3s cubic-bezier(.17,.89,.32,1.25);text-align:center}
+.username-icon{font-size:36px;margin-bottom:12px}
+.username-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;margin-bottom:6px}
+.username-sub{font-size:12px;color:var(--mid);margin-bottom:20px}
+.es-icon{font-size:38px;margin-bottom:12px}
+.es-text{font-size:13px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="7.5" y="1.5" width="3" height="15" rx="1.5" fill="white"/><rect x="1.5" y="6" width="15" height="3" rx="1.5" fill="white"/></svg></div>
+    <div class="brand-name">ConnectTrack</div>
+    <div class="brand-sub">Visitor Records System</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section-label">Menu</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg></span>Dashboard</button>
+    <button class="nav-item" onclick="showPage('register',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M1 14.5c0-3.038 2.462-5.5 5.5-5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 9.5v5M9.5 12h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>Register Visitor</button>
+    <button class="nav-item" onclick="showPage('records',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2.5" rx="1.25" fill="currentColor"/><rect x="1" y="6.75" width="10" height="2.5" rx="1.25" fill="currentColor" opacity=".65"/><rect x="1" y="11.5" width="12" height="2.5" rx="1.25" fill="currentColor" opacity=".4"/></svg></span>All Records</button>
+    <div class="nav-section-label" style="margin-top:8px">Management</div>
+    <button class="nav-item" onclick="showPage('team',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M0.5 14.5c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12.5" cy="4" r="2" fill="currentColor" opacity=".55"/><path d="M11 14.5c0-1.933 1.2-3.6 3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg></span>Team Members</button>
+    <button class="nav-item" onclick="showPage('pastor',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v13M1.5 8h13" stroke="currentColor" stroke-width="1.2" opacity=".7"/><path d="M2.5 5c1.5 1.2 3.2 1.8 5.5 1.8S11 6.2 12.5 5M2.5 11c1.5-1.2 3.2-1.8 5.5-1.8s3.5.6 5 1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg></span>Pastor's View</button>
+    <button class="nav-item" onclick="showPage('audit',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2.5" y="3" width="11" height="12" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 1.5h5a1 1 0 011 1V4h-7V2.5a1 1 0 011-1z" fill="currentColor" opacity=".75"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>Audit Log</button>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="service-badge">
+      <div class="service-dot"></div>
+      <div>
+        <div class="service-label">Today's Service</div>
+        <div class="service-date" id="sidebarDate">—</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topDate">—</div>
+      <button class="btn btn-outline" onclick="openImportModal()"><span style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 4l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Import Sheet</span></button>
+      <button class="btn btn-gold" onclick="showPage('register',document.querySelectorAll('.nav-item')[1])">Register Visitor</button>
+    </div>
+  </header>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+
+    <!-- Dashboard filter bar -->
+    <div class="dash-filter-bar">
+      <!-- Period segment -->
+      <div class="dash-seg">
+        <button class="dash-seg-btn active" onclick="setDashFilter('all',this)">All Time</button>
+        <button class="dash-seg-btn" onclick="setDashFilter('thisMonth',this)">This Month</button>
+        <button class="dash-seg-btn" onclick="setDashFilter('lastMonth',this)">Last Month</button>
+      </div>
+
+      <div class="dash-filter-divider"></div>
+
+      <!-- Quarter segment -->
+      <div class="dash-seg">
+        <button class="dash-seg-btn" onclick="setDashFilter('q1',this)">Q1</button>
+        <button class="dash-seg-btn" onclick="setDashFilter('q2',this)">Q2</button>
+        <button class="dash-seg-btn" onclick="setDashFilter('q3',this)">Q3</button>
+        <button class="dash-seg-btn" onclick="setDashFilter('q4',this)">Q4</button>
+      </div>
+
+      <div class="dash-filter-divider"></div>
+
+      <!-- Year picker -->
+      <div class="dash-year-wrap">
+        <select class="dash-filter-select" id="dashYearSelect" onchange="setDashFilter('year',null,this.value)">
+          <option value="">All Years</option>
+        </select>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#FEF9EC;color:var(--gold)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="7.5" y="1.5" width="3" height="15" rx="1.5" fill="currentColor" opacity=".9"/><rect x="1.5" y="6" width="15" height="3" rx="1.5" fill="currentColor" opacity=".5"/></svg></div>
+        <div class="stat-num" id="s-total">0</div>
+        <div class="stat-label">Total Visitors</div>
+        <div class="stat-trend" id="s-trend" style="color:var(--success)"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--first-bg);color:var(--first)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3.5" fill="currentColor"/><path d="M2 17c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="stat-num" id="s-first" style="color:var(--first)">0</div>
+        <div class="stat-label">First Timers</div>
+        <div class="stat-trend" style="color:var(--first)">New souls</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--second-bg);color:var(--second)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3.5" fill="currentColor"/><path d="M2 17c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 11l2-2-2-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="stat-num" id="s-second" style="color:var(--second)">0</div>
+        <div class="stat-label">Second Timers</div>
+        <div class="stat-trend" style="color:var(--second)">Returning</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#FFF7ED;color:#F97316"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6.5" cy="5.5" r="2.5" fill="currentColor"/><path d="M0.5 16c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="14" cy="5" r="2" fill="currentColor" opacity=".55"/><path d="M12.5 16c0-2 1.2-3.8 3-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg></div>
+        <div class="stat-num" id="s-team" style="color:#F97316">0</div>
+        <div class="stat-label">Team Members</div>
+        <div class="stat-trend" style="color:#F97316">Assigned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#F0FDF4;color:#059669"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="5.5" r="3" fill="currentColor"/><path d="M2 16.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12.5 10l1.5 1.5 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="stat-num" id="s-workers" style="color:#059669">0</div>
+        <div class="stat-label">Workers</div>
+        <div class="stat-trend" id="s-worker-rate" style="color:#059669">Converted</div>
+      </div>
+    </div>
+
+    <!-- First & Second Timer Cards side by side -->
+    <div class="timer-split">
+
+      <!-- First Timers Card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" style="color:var(--first)">First Timers</div>
+            <div class="assigned-strip" style="margin-top:6px">
+              <span class="assigned-label">Handled by:</span>
+              <div id="firstAssigned"></div>
+            </div>
+          </div>
+          <span class="card-badge badge-first" id="firstCount">0 visitors</span>
+        </div>
+        <div id="firstList">
+          <div class="v-empty"><div class="v-empty-text">No first timers registered yet</div></div>
+        </div>
+      </div>
+
+      <!-- Second Timers Card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" style="color:var(--second)">Second Timers</div>
+            <div class="assigned-strip" style="margin-top:6px">
+              <span class="assigned-label">Handled by:</span>
+              <div id="secondAssigned"></div>
+            </div>
+          </div>
+          <span class="card-badge badge-second" id="secondCount">0 visitors</span>
+        </div>
+        <div id="secondList">
+          <div class="v-empty"><div class="v-empty-text">No second timers registered yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- At-Risk: First Timers not returned in 6 months -->
+    <div id="atRiskSection"></div>
+
+    <!-- Recent all visitors table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Recent Visitors</div>
+        <div class="search-box">
+          <span style="display:flex;align-items:center;color:var(--mid)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.5"/><line x1="8.5" y1="8.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+          <input type="text" placeholder="Search by name…" oninput="renderDashSearch(this.value)">
+        </div>
+      </div>
+      <div id="dashTable">
+        <div class="empty-state"><div class="es-text">Register your first visitor to begin</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REGISTER ── -->
+  <div class="page" id="page-register">
+    <div class="form-wrapper">
+      <div class="form-header">
+        <h2>Welcome to the Family</h2>
+        <p>Please fill in this form — we'd love to stay in touch with you</p>
+      </div>
+      <form class="form-card" onsubmit="saveVisitor(event)">
+        <div class="f-section">
+          <div class="f-sec-label">Visit Type</div>
+          <div class="visit-toggle">
+            <label class="toggle-option"><input type="radio" name="visitType" value="first" required onchange="onVisitTypeChange('first')"><div class="toggle-label"><div class="t-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" fill="currentColor"/><path d="M3 21c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="t-title">First Timer</div><div class="t-desc">My first visit</div></div></label>
+            <label class="toggle-option"><input type="radio" name="visitType" value="second" onchange="onVisitTypeChange('second')"><div class="toggle-label"><div class="t-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" fill="currentColor"/><path d="M3 21c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M17 14l2.5-2.5-2.5-2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="t-title">Second Timer</div><div class="t-desc">I've been here before</div></div></label>
+            <label class="toggle-option"><input type="radio" name="visitType" value="special" onchange="onVisitTypeChange('special')"><div class="toggle-label"><div class="t-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l2.4 5.5H19l-4.5 3.3 1.7 5.7L11 13l-5.2 3.5 1.7-5.7L3 7.5h5.6L11 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg></div><div class="t-title">Special Program</div><div class="t-desc">Event or conference</div></div></label>
+          </div>
+
+          <!-- Sub-options: Sunday / Wednesday (First & Second Timer) -->
+          <div class="sub-opts" id="subDayOpts">
+            <label class="sub-opt"><input type="radio" name="serviceDay" value="sunday" required><div class="sub-opt-lbl">Sunday Service</div></label>
+            <label class="sub-opt"><input type="radio" name="serviceDay" value="wednesday"><div class="sub-opt-lbl">Wednesday Service</div></label>
+          </div>
+
+          <!-- Sub-options: Special Program -->
+          <div class="sub-opts three-col" id="subProgramOpts">
+            <label class="sub-opt"><input type="radio" name="programType" value="openheaven" required><div class="sub-opt-lbl">Open Heaven</div></label>
+            <label class="sub-opt"><input type="radio" name="programType" value="eirene"><div class="sub-opt-lbl">Eirene Sisters</div></label>
+            <label class="sub-opt"><input type="radio" name="programType" value="other-program"><div class="sub-opt-lbl">Other Program</div></label>
+          </div>
+        </div>
+
+        <!-- First Timer only: Service Experience -->
+        <div class="f-section f-conditional" id="fFirstOnly">
+          <div class="f-sec-label">Service Experience</div>
+          <div class="f-group"><textarea name="serviceExperience" placeholder="How was your experience today? What stood out to you about the service?"></textarea></div>
+        </div>
+
+        <!-- Second Timer only: Growth Track Interest -->
+        <div class="f-section f-conditional" id="fSecondOnly">
+          <div class="f-sec-label">Growth Track Interest</div>
+          <p style="font-size:12px;color:var(--mid);margin-bottom:14px">Growth Track is our membership &amp; discipleship programme. Would you like to be enrolled?</p>
+          <div class="gt-toggle">
+            <label class="gt-opt"><input type="radio" name="growthTrack" value="yes"><div class="gt-lbl">Yes, I'm interested!</div></label>
+            <label class="gt-opt"><input type="radio" name="growthTrack" value="no"><div class="gt-lbl">Not right now</div></label>
+          </div>
+        </div>
+        <div class="f-section">
+          <div class="f-sec-label">Personal Information</div>
+          <div class="f-row">
+            <div class="f-group"><label>First Name *</label><input type="text" name="firstName" placeholder="e.g. John" required></div>
+            <div class="f-group"><label>Last Name *</label><input type="text" name="lastName" placeholder="e.g. Doe" required></div>
+          </div>
+          <div class="f-row">
+            <div class="f-group"><label>Phone Number *</label><input type="tel" name="phone" placeholder="+234 800 000 0000" required></div>
+            <div class="f-group"><label>Email Address</label><input type="email" name="email" placeholder="john@email.com"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-group">
+              <label>Gender</label>
+              <select name="gender">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+            <div class="f-group"><label>Age Group</label>
+              <select name="ageGroup">
+                <option value="">Select age group</option>
+                <option value="13-20">13 – 20</option>
+                <option value="21-30">21 – 30</option>
+                <option value="31-40">31 – 40</option>
+                <option value="41-50">41 – 50</option>
+                <option value="51+">51 and above</option>
+              </select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-group"><label>Date of Birth</label><input type="text" name="dob" placeholder="e.g. January 1st or 01/01/1995"></div>
+          </div>
+        </div>
+        <div class="f-section">
+          <div class="f-sec-label">Address</div>
+          <div class="f-row single"><div class="f-group"><label>Street Address</label><input type="text" name="address" placeholder="House number, street name"></div></div>
+          <div class="f-row">
+            <div class="f-group"><label>City</label><input type="text" name="city" placeholder="e.g. Lagos"></div>
+            <div class="f-group"><label>State</label><input type="text" name="state" placeholder="e.g. Lagos State"></div>
+          </div>
+        </div>
+        <div class="f-section">
+          <div class="f-sec-label">How Did You Find Us?</div>
+          <div class="source-grid">
+            <label class="src-option"><input type="radio" name="source" value="family" required><div class="src-label">Family & Friends</div></label>
+            <label class="src-option"><input type="radio" name="source" value="instagram"><div class="src-label">Instagram</div></label>
+            <label class="src-option"><input type="radio" name="source" value="facebook"><div class="src-label">Facebook</div></label>
+            <label class="src-option"><input type="radio" name="source" value="twitter"><div class="src-label">Twitter / X</div></label>
+            <label class="src-option"><input type="radio" name="source" value="youtube"><div class="src-label">YouTube</div></label>
+            <label class="src-option"><input type="radio" name="source" value="openheaven"><div class="src-label">Open Heaven</div></label>
+            <label class="src-option"><input type="radio" name="source" value="other"><div class="src-label">Other</div></label>
+          </div>
+        </div>
+        <div class="f-section">
+          <div class="f-sec-label">Prayer Request <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--mid)">(Optional)</span></div>
+          <div class="f-group"><textarea name="prayer" placeholder="Share a prayer request or message for the pastor…"></textarea></div>
+        </div>
+        <div class="f-footer">
+          <div class="req-note"><span>*</span> Required fields</div>
+          <button type="submit" class="btn-submit">Save Visitor Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── ALL RECORDS ── -->
+  <div class="page" id="page-records">
+    <div class="filter-bar">
+      <button class="f-btn active" onclick="filterRec('all',this)">All Visitors</button>
+      <button class="f-btn" onclick="filterRec('first',this)">First Timers</button>
+      <button class="f-btn" onclick="filterRec('second',this)">Second Timers</button>
+      <button class="f-btn" onclick="filterRec('family',this)">Family & Friends</button>
+      <button class="f-btn" onclick="filterRec('social',this)">Social Media</button>
+      <div style="margin-left:auto">
+        <div class="search-box"><span style="display:flex;align-items:center;color:var(--mid)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.5"/><line x1="8.5" y1="8.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><input type="text" id="recSearch" placeholder="Search by name…" oninput="filterRec(currentFilter,null,this.value)"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Visitor Records</div>
+        <button class="btn btn-outline" onclick="exportCSV()"><span style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 8.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Export CSV</span></button>
+      </div>
+      <div id="recordsTable"></div>
+    </div>
+  </div>
+
+  <!-- ── TEAM MEMBERS PAGE ── -->
+  <div class="page" id="page-team">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:12px;color:var(--mid)" id="teamPageSub">Managing your follow-up team</div>
+      </div>
+      <button class="btn btn-gold" onclick="openTeamModal()">+ Add Team Member</button>
+    </div>
+    <div id="teamPageContent"></div>
+  </div>
+
+  <!-- ── PASTOR'S VIEW PAGE ── -->
+  <div class="page" id="page-pastor">
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;color:var(--mid)">At-a-glance overview for leadership</div>
+    </div>
+    <div id="pastorPageContent"></div>
+  </div>
+
+  <!-- ── AUDIT LOG PAGE ── -->
+  <div class="page" id="page-audit">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:12px;color:var(--mid)">All system actions, timestamped</div>
+      <button class="btn btn-outline" onclick="if(confirm('Clear all audit logs?')){auditLog=[];localStorage.setItem('ct_v1_audit',JSON.stringify(auditLog));renderAuditPage();}">Clear Log</button>
+    </div>
+    <div class="card">
+      <div id="auditPageContent"></div>
+    </div>
+  </div>
+
+</main>
+</div><!-- end .app -->
+
+<!-- ══ USER NAME PROMPT ══ -->
+<div class="username-overlay" id="usernameOverlay">
+  <div class="username-box">
+    <div class="username-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="7.5" y="1.5" width="3" height="15" rx="1.5" fill="white"/><rect x="1.5" y="6" width="15" height="3" rx="1.5" fill="white"/></svg></div>
+    <div class="username-title">Welcome to ConnectTrack</div>
+    <div class="username-sub">Enter your name so actions can be tracked in the audit log</div>
+    <input type="text" id="usernameInput" placeholder="e.g. Pastor Amaka" style="width:100%;margin-bottom:12px" maxlength="50">
+    <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="saveUsername()">Continue →</button>
+  </div>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="modal-overlay" id="importModalOverlay" onclick="closeImportModal(event)">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Import from Google Sheet</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px">Upload your exported CSV from Google Sheets</div>
+      </div>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Step 1: Service type -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:8px">Step 1 — Select Service Type</div>
+      <div class="import-service-grid" style="grid-template-columns:repeat(2,1fr);gap:9px;margin:16px 0">
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="sunday-first" checked>
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Sunday<br>First Timer</div>
+        </label>
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="sunday-second">
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Sunday<br>Second Timer</div>
+        </label>
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="wednesday-first">
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Wednesday<br>First Timer</div>
+        </label>
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="wednesday-second">
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Wednesday<br>Second Timer</div>
+        </label>
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="openheaven">
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Open Heaven</div>
+        </label>
+        <label class="import-svc-opt">
+          <input type="radio" name="importService" value="eirene">
+          <div class="import-svc-lbl"><span class="import-svc-lbl-icon"> </span>Eirene Sisters</div>
+        </label>
+      </div>
+
+      <!-- Step 2: File upload -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin:16px 0 8px">Step 2 — Upload CSV File</div>
+      <div class="import-drop" id="importDrop" onclick="document.getElementById('importFileInput').click()" ondragover="importDragOver(event)" ondragleave="importDragLeave(event)" ondrop="importDrop(event)">
+        <div class="import-drop-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="2" width="18" height="24" rx="3" stroke="currentColor" stroke-width="2" opacity=".4"/><path d="M18 2l8 8h-8V2z" fill="currentColor" opacity=".3"/><line x1="8" y1="14" x2="18" y2="14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".5"/><line x1="8" y1="18" x2="15" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".5"/></svg></div>
+        <div class="import-drop-text" id="importDropText">Click to select or drag & drop your CSV file</div>
+        <div class="import-drop-sub">Exported from Google Sheets → File → Download → CSV</div>
+      </div>
+      <input type="file" id="importFileInput" accept=".csv" style="display:none" onchange="importFileSelected(event)">
+
+      <!-- Preview -->
+      <div id="importPreviewArea" style="display:none">
+        <div style="margin-top:16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:6px">Step 3 — Preview</div>
+        <div class="import-status" id="importStatus"></div>
+        <div class="import-preview" id="importPreview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-gold" id="importConfirmBtn" style="display:none" onclick="confirmImport()">Import Records</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEAM MODAL ══ -->
+<div class="modal-overlay" id="teamModalOverlay" onclick="closeTeamModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Team Members</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px">Assign people to handle first & second timers</div>
+      </div>
+      <button class="modal-close" onclick="closeTeamModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="team-list" id="teamList"></div>
+      <!-- Add form -->
+      <div class="add-form">
+        <div class="add-form-title">+ Add New Team Member</div>
+        <form onsubmit="addTeamMember(event)">
+          <div class="af-row">
+            <div class="f-group"><label>Full Name *</label><input type="text" name="tmName" placeholder="e.g. Pastor Amaka" required></div>
+            <div class="f-group"><label>Role / Title *</label><input type="text" name="tmRole" placeholder="e.g. Welcome Coordinator" required></div>
+          </div>
+          <div class="af-row">
+            <div class="f-group"><label>Phone Number</label><input type="tel" name="tmPhone" placeholder="+234 800 000 0000"></div>
+          </div>
+          <div class="f-group" style="margin-bottom:14px">
+            <label>Assigned To *</label>
+            <div class="assign-select-grid" style="margin-top:8px">
+              <label class="as-opt"><input type="radio" name="tmAssign" value="first" required><div class="as-lbl">First Timers</div></label>
+              <label class="as-opt"><input type="radio" name="tmAssign" value="second"><div class="as-lbl">Second Timers</div></label>
+              <label class="as-opt"><input type="radio" name="tmAssign" value="both"><div class="as-lbl">Both Groups</div></label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center">Add Team Member</button>
+        </form>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeTeamModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISITOR MODAL ══ -->
+<div class="modal-overlay" id="visitorModalOverlay" onclick="closeVisitorModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="vModalName">Visitor</div>
+        <div id="vModalBadge" style="margin-top:7px"></div>
+      </div>
+      <button class="modal-close" onclick="closeVisitorModal()">✕</button>
+    </div>
+    <div class="modal-body" id="vModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeVisitorModal()">Close</button>
+      <button class="btn btn-teal" id="promoteBtn" onclick="promoteToSecond()">Mark as Second Timer</button>
+      <button class="btn" id="workerBtn" onclick="toggleWorker()" style="background:#059669;color:white;display:none">Mark as Worker</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMBER PROFILE MODAL ══ -->
+<div class="modal-overlay" id="memberModalOverlay" onclick="closeMemberModal(event)">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="mpModalTitle">Team Member</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px" id="mpModalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+    </div>
+    <div class="modal-body" id="mpModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeMemberModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTACT LOG DIALOG ══ -->
+<div class="log-dialog-overlay" id="logDialogOverlay">
+  <div class="log-dialog">
+    <div class="log-dialog-hdr">
+      <div class="log-dialog-icon" id="logDialogIcon"></div>
+      <div>
+        <div class="log-dialog-title" id="logDialogTitle">Log Contact</div>
+        <div class="log-dialog-sub" id="logDialogSub"></div>
+      </div>
+    </div>
+    <div class="log-dialog-body">
+      <div class="log-dialog-visitor" id="logDialogVisitor"></div>
+      <div class="f-group">
+        <label>Notes / Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--mid)">(Optional)</span></label>
+        <textarea id="logDialogComment" placeholder="e.g. Spoke briefly, will follow up next Sunday. Visitor expressed interest in joining a life group…" style="margin-top:6px;min-height:90px"></textarea>
+      </div>
+    </div>
+    <div class="log-dialog-footer">
+      <button class="btn btn-outline" onclick="closeLogDialog()">Cancel</button>
+      <button class="btn btn-gold" id="logDialogSaveBtn" onclick="saveContactLog()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ASSIGN VISITOR MODAL ══ -->
+<div class="modal-overlay" id="assignVisitorOverlay" onclick="closeAssignVisitorModal(event)">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="avModalTitle">Assign Visitors</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px" id="avModalSub">Select visitors to assign to this team member</div>
+      </div>
+      <button class="modal-close" onclick="closeAssignVisitorModal()">✕</button>
+    </div>
+    <div class="modal-body" id="avModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAssignVisitorModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">✓</div>
+  <div class="toast-msg"><strong id="toastTitle"></strong><span id="toastSub"></span></div>
+</div>
+
+<script>
+// ── DATA ──
+let visitors    = JSON.parse(localStorage.getItem('ct_v1_visitors') || '[]');
+let teamMembers = JSON.parse(localStorage.getItem('ct_v1_team')     || '[]');
+let contactLogs = JSON.parse(localStorage.getItem('ct_v1_logs')     || '[]');
+let auditLog    = JSON.parse(localStorage.getItem('ct_v1_audit')    || '[]');
+let currentUser = localStorage.getItem('ct_v1_user') || '';
+let currentFilter = 'all';
+let activeModalId = null;
+let activeMemberId = null;
+let dashFilter = { type:'all', year:'' };
+
+// ── INIT ──
+function init() {
+  const now = new Date();
+  const full = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const short = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('topDate').textContent = full;
+  document.getElementById('sidebarDate').textContent = short;
+  if (!currentUser) document.getElementById('usernameOverlay').classList.add('open');
+  refreshAll();
+}
+
+function saveUsername() {
+  const val = document.getElementById('usernameInput').value.trim();
+  if (!val) return;
+  currentUser = val;
+  localStorage.setItem('ct_v1_user', val);
+  document.getElementById('usernameOverlay').classList.remove('open');
+  addAudit('S','Signed in',`${val} signed into ConnectTrack`);
+}
+
+function refreshAll() {
+  populateDashYears();
+  renderStats();
+  renderFirstCard();
+  renderSecondCard();
+  renderDashSearch('');
+  renderRecordsTable();
+  renderAtRisk();
+  renderTeamPage();
+  renderPastorPage();
+  renderAuditPage();
+}
+
+// ── PAGE NAV ──
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',register:'Register New Visitor',records:'All Records',team:'Team Members',pastor:"Global Pastor's View",audit:'Audit Log'};
+  document.getElementById('pageTitle').textContent = titles[id]||id;
+  if (id==='records') renderRecordsTable();
+  if (id==='team') renderTeamPage();
+  if (id==='pastor') renderPastorPage();
+  if (id==='audit') renderAuditPage();
+}
+
+// ── DASHBOARD FILTER ──
+function getDashFilteredVisitors() {
+  const now = new Date();
+  const y = now.getFullYear(); const m = now.getMonth();
+  return visitors.filter(v=>{
+    const d = v.dateRaw ? new Date(v.dateRaw) : parseDateStr(v.date);
+    if (!d || isNaN(d)) return dashFilter.type==='all' && !dashFilter.year;
+    if (dashFilter.year && d.getFullYear()!==parseInt(dashFilter.year)) return false;
+    if (dashFilter.type==='all') return true;
+    if (dashFilter.type==='thisMonth') return d.getFullYear()===y && d.getMonth()===m;
+    if (dashFilter.type==='lastMonth') { const lm=m===0?11:m-1; const ly=m===0?y-1:y; return d.getFullYear()===ly&&d.getMonth()===lm; }
+    if (dashFilter.type==='q1') return d.getFullYear()===(dashFilter.year?parseInt(dashFilter.year):y) && d.getMonth()<=2;
+    if (dashFilter.type==='q2') return d.getFullYear()===(dashFilter.year?parseInt(dashFilter.year):y) && d.getMonth()>=3&&d.getMonth()<=5;
+    if (dashFilter.type==='q3') return d.getFullYear()===(dashFilter.year?parseInt(dashFilter.year):y) && d.getMonth()>=6&&d.getMonth()<=8;
+    if (dashFilter.type==='q4') return d.getFullYear()===(dashFilter.year?parseInt(dashFilter.year):y) && d.getMonth()>=9;
+    if (dashFilter.type==='year') return d.getFullYear()===parseInt(dashFilter.year);
+    return true;
+  });
+}
+function parseDateStr(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d)?null:d;
+}
+function setDashFilter(type, btn, year) {
+  if (btn) {
+    document.querySelectorAll('.dash-seg-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  if (type==='year') {
+    dashFilter = { type:'year', year: year||'' };
+  } else {
+    dashFilter = { type, year: dashFilter.year };
+    if (type!=='all') document.getElementById('dashYearSelect').value='';
+  }
+  if (type==='all') { dashFilter.year=''; document.getElementById('dashYearSelect').value=''; }
+  renderStats(); renderFirstCard(); renderSecondCard(); renderDashSearch(''); renderAtRisk();
+}
+function populateDashYears() {
+  const sel = document.getElementById('dashYearSelect');
+  const years = [...new Set(visitors.map(v=>{
+    const d = v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date);
+    return d&&!isNaN(d)?d.getFullYear():null;
+  }).filter(Boolean))].sort((a,b)=>b-a);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Years</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+// ── STATS ──
+function renderStats() {
+  const data = getDashFilteredVisitors();
+  const f = data.filter(v=>v.visitType==='first').length;
+  const s = data.filter(v=>v.visitType==='second').length;
+  const w = data.filter(v=>v.isWorker).length;
+  const rate = s > 0 ? Math.round((w/s)*100) : 0;
+  document.getElementById('s-total').textContent  = data.length;
+  document.getElementById('s-first').textContent  = f;
+  document.getElementById('s-second').textContent = s;
+  document.getElementById('s-team').textContent   = teamMembers.length;
+  document.getElementById('s-workers').textContent = w;
+  document.getElementById('s-worker-rate').textContent = rate > 0 ? `${rate}% of 2nd timers` : 'Converted';
+  document.getElementById('s-trend').textContent  = `↑ ${data.length} total registered`;
+}
+
+// ── HELPERS ──
+const avColors = ['#0D9488','#7C3AED','#C9A84C','#F97316','#DC2626','#059669','#1D4ED8','#DB2777'];
+function avColor(name) { return avColors[name.charCodeAt(0) % avColors.length]; }
+function initials(v)   { return `${v.firstName[0]}${v.lastName[0]}`.toUpperCase(); }
+function srcLabel(s) {
+  return {family:'Family & Friends',instagram:'Instagram',facebook:'Facebook',twitter:'Twitter / X',youtube:'YouTube',openheaven:'Open Heaven',other:'Other'}[s]||s;
+}
+
+// ── ASSIGNED STRIP ──
+function assignedStrip(type) {
+  const members = teamMembers.filter(m=>m.assign===type||m.assign==='both');
+  if (!members.length) return '<span style="font-size:11px;color:var(--mid);font-style:italic">No one assigned yet — <a href="#" onclick="openTeamModal();return false;" style="color:var(--gold);text-decoration:none">add team</a></span>';
+  let html = members.slice(0,4).map(m=>{
+    const col = avColor(m.name);
+    const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `<div class="assigned-avatar" style="background:${col}22;color:${col};border-color:var(--white)" title="${m.name} · ${m.role}">${ini}</div>`;
+  }).join('');
+  if (members.length>4) html += `<span class="assigned-more">+${members.length-4} more</span>`;
+  return `<div class="assigned-avatars">${html}</div>`;
+}
+
+// ── FIRST TIMERS CARD ──
+function renderFirstCard() {
+  const list = getDashFilteredVisitors().filter(v=>v.visitType==='first');
+  document.getElementById('firstCount').textContent = `${list.length} visitor${list.length!==1?'s':''}`;
+  document.getElementById('firstAssigned').innerHTML = assignedStrip('first');
+  const el = document.getElementById('firstList');
+  if (!list.length) { el.innerHTML=`<div class="v-empty"><div class="v-empty-text">No first timers registered yet</div></div>`; return; }
+  el.innerHTML = list.slice(0,6).map(v=>`
+    <div class="v-row" onclick="openVisitorModal(${v.id})">
+      <div class="v-avatar" style="background:${avColor(v.firstName)}22;color:${avColor(v.firstName)}">${initials(v)}</div>
+      <div class="v-info">
+        <div class="v-name">${v.firstName} ${v.lastName}${v.isWorker?' <span class="worker-badge" style="font-size:9px;padding:1px 7px">Worker</span>':''}</div>
+        <div class="v-meta">${v.phone}${v.email?' · '+v.email:''}</div>
+      </div>
+      <div class="v-right">
+        <div class="v-date">${v.date}</div>
+        <div class="v-source">${srcLabel(v.source)}</div>
+        <div class="v-actions">
+          <button class="v-action-btn" onclick="event.stopPropagation();openVisitorModal(${v.id})" title="View"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5S3 2 6.5 2 12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5z" stroke="currentColor" stroke-width="1.3"/><circle cx="6.5" cy="6.5" r="1.8" fill="currentColor" opacity=".7"/></svg></button>
+          <button class="v-action-btn del" onclick="event.stopPropagation();deleteVisitor(${v.id})" title="Delete"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+    </div>`).join('');
+  if (list.length>6) el.innerHTML += `<div style="padding:10px 18px;font-size:12px;color:var(--mid);border-top:1px solid #F5EFE5;cursor:pointer;text-align:center" onclick="showPage('records',document.querySelectorAll('.nav-item')[2])">View all ${list.length} first timers →</div>`;
+}
+
+// ── SECOND TIMERS CARD ──
+function renderSecondCard() {
+  const list = getDashFilteredVisitors().filter(v=>v.visitType==='second');
+  document.getElementById('secondCount').textContent = `${list.length} visitor${list.length!==1?'s':''}`;
+  document.getElementById('secondAssigned').innerHTML = assignedStrip('second');
+  const el = document.getElementById('secondList');
+  if (!list.length) { el.innerHTML=`<div class="v-empty"><div class="v-empty-text">No second timers registered yet</div></div>`; return; }
+  el.innerHTML = list.slice(0,6).map(v=>`
+    <div class="v-row" onclick="openVisitorModal(${v.id})">
+      <div class="v-avatar" style="background:${avColor(v.firstName)}22;color:${avColor(v.firstName)}">${initials(v)}</div>
+      <div class="v-info">
+        <div class="v-name">${v.firstName} ${v.lastName}${v.isWorker?' <span class="worker-badge" style="font-size:9px;padding:1px 7px">Worker</span>':''}</div>
+        <div class="v-meta">${v.phone}${v.email?' · '+v.email:''}</div>
+      </div>
+      <div class="v-right">
+        <div class="v-date">${v.date}</div>
+        <div class="v-source">${srcLabel(v.source)}</div>
+        <div class="v-actions">
+          <button class="v-action-btn" onclick="event.stopPropagation();openVisitorModal(${v.id})" title="View"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5S3 2 6.5 2 12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5z" stroke="currentColor" stroke-width="1.3"/><circle cx="6.5" cy="6.5" r="1.8" fill="currentColor" opacity=".7"/></svg></button>
+          <button class="v-action-btn del" onclick="event.stopPropagation();deleteVisitor(${v.id})" title="Delete"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+    </div>`).join('');
+  if (list.length>6) el.innerHTML += `<div style="padding:10px 18px;font-size:12px;color:var(--mid);border-top:1px solid #F5EFE5;cursor:pointer;text-align:center" onclick="showPage('records',document.querySelectorAll('.nav-item')[2])">View all ${list.length} second timers →</div>`;
+}
+
+// ── DASH SEARCH TABLE ──
+function renderDashSearch(q='') {
+  let data = getDashFilteredVisitors();
+  if (q) data = data.filter(v=>`${v.firstName} ${v.lastName}`.toLowerCase().includes(q.toLowerCase()));
+  const el = document.getElementById('dashTable');
+  if (!data.length) { el.innerHTML=`<div class="empty-state"><div class="es-text">No visitors found</div></div>`; return; }
+  el.innerHTML = `<table><thead><tr><th>Name</th><th>Contact</th><th>Visit Type</th><th>Source</th><th>Date</th><th>Actions</th></tr></thead><tbody>${
+    data.slice(0,8).map(v=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:9px"><div style="width:30px;height:30px;border-radius:9px;background:${avColor(v.firstName)}22;color:${avColor(v.firstName)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initials(v)}</div>${v.firstName} ${v.lastName}</div></td>
+      <td style="color:var(--mid);font-size:11px">${v.phone}<br>${v.email||'—'}</td>
+      <td>${v.visitType==='first'?'<span class="t-badge t-badge-first">First Timer</span>':'<span class="t-badge t-badge-second">Second Timer</span>'}</td>
+      <td><span class="t-src">${srcLabel(v.source)}</span></td>
+      <td style="font-size:11px;color:var(--mid)">${v.date}</td>
+      <td><div class="action-btns"><button class="action-btn" onclick="openVisitorModal(${v.id})"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5S3 2 6.5 2 12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5z" stroke="currentColor" stroke-width="1.3"/><circle cx="6.5" cy="6.5" r="1.8" fill="currentColor" opacity=".7"/></svg></button><button class="action-btn del" onclick="deleteVisitor(${v.id})"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+// ── RECORDS TABLE ──
+function renderRecordsTable() {
+  let data = [...visitors];
+  const q = document.getElementById('recSearch')?.value||'';
+  if (currentFilter==='first')  data = data.filter(v=>v.visitType==='first');
+  if (currentFilter==='second') data = data.filter(v=>v.visitType==='second');
+  if (currentFilter==='family') data = data.filter(v=>v.source==='family');
+  if (currentFilter==='social') data = data.filter(v=>['instagram','facebook','twitter','youtube'].includes(v.source));
+  if (q) data = data.filter(v=>`${v.firstName} ${v.lastName}`.toLowerCase().includes(q.toLowerCase()));
+  const el = document.getElementById('recordsTable');
+  if (!data.length) { el.innerHTML=`<div class="empty-state"><div class="es-text">No records found</div></div>`; return; }
+  el.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Visit Type</th><th>Source</th><th>Date</th><th>Worker</th><th>Assigned To</th><th>Contact Log</th><th>Actions</th></tr></thead><tbody>${
+    data.map(v=>{
+      const addr=[v.address,v.city,v.state].filter(Boolean).join(', ')||'—';
+      const vLogs = contactLogs.filter(l=>l.visitorId===v.id);
+      const callCount = vLogs.filter(l=>l.type==='call').length;
+      const textCount = vLogs.filter(l=>l.type==='text').length;
+      const lastLog = [...vLogs].sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      const assignedNames = (v.assignedMemberIds||[]).map(id=>teamMembers.find(m=>m.id===id)?.name.split(' ').slice(-1)[0]).filter(Boolean);
+      const contactCell = vLogs.length
+        ? `<div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${callCount?`<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--first-bg);color:var(--first)">${callCount} call${callCount!==1?'s':''}</span>`:''}
+              ${textCount?`<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--second-bg);color:var(--second)">${textCount} text${textCount!==1?'s':''}</span>`:''}
+            </div>
+            ${lastLog?.comment?`<div style="font-size:10px;color:var(--mid);font-style:italic;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${lastLog.comment.replace(/"/g,'&quot;')}">"${lastLog.comment}"</div>`:''}
+            <div style="font-size:9px;color:var(--mid);opacity:.7">Last: ${lastLog.dateShort}</div>
+          </div>`
+        : '<span style="font-size:11px;color:var(--mid)">—</span>';
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:9px"><div style="width:30px;height:30px;border-radius:9px;background:${avColor(v.firstName)}22;color:${avColor(v.firstName)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initials(v)}</div>${v.firstName} ${v.lastName}</div></td>
+        <td style="font-size:11px">${v.phone}</td>
+        <td style="font-size:11px;color:var(--mid)">${v.email||'—'}</td>
+        <td style="font-size:11px;color:var(--mid);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</td>
+        <td>${v.visitType==='first'?'<span class="t-badge t-badge-first">First Timer</span>':'<span class="t-badge t-badge-second">Second Timer</span>'}</td>
+        <td><span class="t-src">${srcLabel(v.source)}</span></td>
+        <td style="font-size:11px;color:var(--mid)">${v.date}</td>
+        <td>${v.isWorker?'<span class="worker-badge">Worker</span>':'<span style="font-size:11px;color:var(--mid)">—</span>'}</td>
+        <td>${assignedNames.length?assignedNames.map(n=>`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(201,168,76,.12);color:var(--gold-dark);display:inline-block;margin:1px">${n}</span>`).join(''):'<span style="font-size:11px;color:var(--mid)">Unassigned</span>'}</td>
+        <td>${contactCell}</td>
+        <td><div class="action-btns"><button class="action-btn" onclick="openVisitorModal(${v.id})"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5S3 2 6.5 2 12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5z" stroke="currentColor" stroke-width="1.3"/><circle cx="6.5" cy="6.5" r="1.8" fill="currentColor" opacity=".7"/></svg></button><button class="action-btn del" onclick="deleteVisitor(${v.id})"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div></td>
+      </tr>`;
+    }).join('')
+  }</tbody></table>`;
+}
+
+function filterRec(type, btn, search) {
+  currentFilter = type;
+  if (btn) { document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  renderRecordsTable();
+}
+
+// ── SIDEBAR TEAM (legacy no-op — team moved to full page) ──
+function renderSbTeam() {}
+
+// ── TEAM MODAL ──
+function openTeamModal() {
+  renderTeamList();
+  document.getElementById('teamModalOverlay').classList.add('open');
+}
+function closeTeamModal(e) {
+  if (!e || e.target===document.getElementById('teamModalOverlay'))
+    document.getElementById('teamModalOverlay').classList.remove('open');
+}
+function renderTeamList() {
+  const el = document.getElementById('teamList');
+  if (!teamMembers.length) { el.innerHTML='<div style="font-size:13px;color:var(--mid);text-align:center;padding:16px 0">No team members yet — add one below</div>'; return; }
+  el.innerHTML = teamMembers.map(m=>{
+    const col = avColor(m.name);
+    const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const badgeCls = m.assign==='first'?'tm-first':m.assign==='second'?'tm-second':'tm-both';
+    const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both Groups';
+    return `<div class="tm-card">
+      <div class="tm-av" style="background:${col}22;color:${col}">${ini}</div>
+      <div class="tm-info">
+        <div class="tm-name">${m.name}</div>
+        <div class="tm-role">${m.role}</div>
+        ${m.phone?`<div class="tm-phone">${m.phone}</div>`:''}
+      </div>
+      <span class="tm-assign ${badgeCls}">${badgeTxt}</span>
+      <button class="tm-del" onclick="deleteTeamMember(${m.id})"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+    </div>`;
+  }).join('');
+}
+
+function addTeamMember(e) {
+  e.preventDefault();
+  const d = new FormData(e.target);
+  const m = { id:Date.now(), name:d.get('tmName').trim(), role:d.get('tmRole').trim(), phone:d.get('tmPhone')?.trim()||'', assign:d.get('tmAssign') };
+  teamMembers.unshift(m);
+  localStorage.setItem('ct_v1_team', JSON.stringify(teamMembers));
+  addAudit('U+','Team Member Added',`${m.name} (${m.role}) added to the team`);
+  e.target.reset();
+  renderTeamList();
+  renderTeamPage();
+  refreshAll();
+  const lbl = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both Groups';
+  showToast('✓',`${m.name} added!`,`Assigned to ${lbl}`);
+}
+
+function deleteTeamMember(id) {
+  if (!confirm('Remove this team member?')) return;
+  const m = teamMembers.find(x=>x.id===id);
+  teamMembers = teamMembers.filter(m=>m.id!==id);
+  localStorage.setItem('ct_v1_team', JSON.stringify(teamMembers));
+  if (m) addAudit('U×','Team Member Removed',`${m.name} was removed from the team`);
+  renderTeamList();
+  refreshAll();
+  showToast('×','Member removed','Team updated');
+}
+
+// ── MEMBER PROFILE MODAL ──
+function getAssignedVisitors(m) {
+  // Include visitors individually assigned to this member OR assigned by type
+  return visitors.filter(v => {
+    const individuallyAssigned = v.assignedMemberIds && v.assignedMemberIds.includes(m.id);
+    const typeAssigned = m.assign==='first' ? v.visitType==='first'
+                       : m.assign==='second' ? v.visitType==='second'
+                       : true;
+    return individuallyAssigned || typeAssigned;
+  });
+}
+
+function openMemberModal(id) {
+  const m = teamMembers.find(x=>x.id===id);
+  if (!m) return;
+  activeMemberId = id;
+  const col = avColor(m.name);
+  const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both Groups';
+  document.getElementById('mpModalTitle').textContent = m.name;
+  document.getElementById('mpModalSub').textContent = m.role + (m.phone ? ' · ' + m.phone : '');
+  renderMemberModalBody(m, col, ini, badgeTxt);
+  document.getElementById('memberModalOverlay').classList.add('open');
+}
+
+function renderMemberModalBody(m, col, ini, badgeTxt) {
+  const assigned = getAssignedVisitors(m);
+  const logs = contactLogs.filter(l=>l.memberId===m.id);
+  const calls = logs.filter(l=>l.type==='call').length;
+  const texts = logs.filter(l=>l.type==='text').length;
+
+  const visitorsHtml = assigned.length ? assigned.map(v=>{
+    const lastCall = logs.filter(l=>l.visitorId===v.id&&l.type==='call').slice(-1)[0];
+    const lastText = logs.filter(l=>l.visitorId===v.id&&l.type==='text').slice(-1)[0];
+    const hasCall = !!lastCall; const hasText = !!lastText;
+    return `<div class="mp-visitor-row">
+      <div class="mp-v-av" style="background:${avColor(v.firstName)}22;color:${avColor(v.firstName)}">${initials(v)}</div>
+      <div class="mp-v-info">
+        <div class="mp-v-name">${v.firstName} ${v.lastName}</div>
+        <div class="mp-v-meta">${v.visitType==='first'?'First Timer':'Second Timer'} · ${v.phone}${lastCall?` · Last call: ${lastCall.dateShort}`:''}${lastText?` · Last text: ${lastText.dateShort}`:''}</div>
+      </div>
+      <div class="mp-log-btns">
+        <button class="mp-log-btn call${hasCall?' logged':''}" onclick="logContact(${m.id},${v.id},'call')">${hasCall?'Called':'Call'}</button>
+        <button class="mp-log-btn text${hasText?' logged':''}" onclick="logContact(${m.id},${v.id},'text')">${hasText?'Texted':'Text'}</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="mp-empty">No visitors assigned yet</div>';
+
+  const recentLogs = [...logs].reverse().slice(0,10);
+  const logHtml = recentLogs.length ? recentLogs.map(l=>{
+    const vis = visitors.find(v=>v.id===l.visitorId);
+    return `<div class="mp-log-entry" style="flex-direction:column;align-items:flex-start;gap:4px;padding:9px 0">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <span class="mp-log-pill ${l.type==='call'?'mp-log-call':'mp-log-text'}">${l.type==='call'?'Call':'Text'}</span>
+        <span style="flex:1;font-weight:600;color:var(--deep)">${vis?vis.firstName+' '+vis.lastName:'Unknown visitor'}</span>
+        <span style="font-size:10px;color:var(--mid);flex-shrink:0">${l.dateShort}</span>
+      </div>
+      ${l.comment?`<div style="font-size:11px;color:var(--mid);font-style:italic;padding-left:4px;border-left:2px solid var(--border);margin-left:2px;line-height:1.5">"${l.comment}"</div>`:''}
+    </div>`;
+  }).join('') : '<div style="font-size:11px;color:var(--mid);font-style:italic;padding:8px 0">No contacts logged yet</div>';
+
+  document.getElementById('mpModalBody').innerHTML = `
+    <div class="mp-hero">
+      <div class="mp-av" style="background:${col}30;color:${col}">${ini}</div>
+      <div style="flex:1">
+        <div class="mp-name">${m.name}</div>
+        <div class="mp-role">${m.role}</div>
+        ${m.phone?`<div class="mp-phone">${m.phone}</div>`:''}
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px;background:rgba(201,168,76,.2);color:var(--gold)">${badgeTxt}</span>
+    </div>
+    <div class="mp-stats">
+      <div class="mp-stat">
+        <div class="mp-stat-num" style="color:var(--gold)">${assigned.length}</div>
+        <div class="mp-stat-lbl">Visitors Assigned</div>
+      </div>
+      <div class="mp-stat">
+        <div class="mp-stat-num" style="color:var(--first)">${calls}</div>
+        <div class="mp-stat-lbl">Calls Made</div>
+      </div>
+      <div class="mp-stat">
+        <div class="mp-stat-num" style="color:var(--second)">${texts}</div>
+        <div class="mp-stat-lbl">Texts Sent</div>
+      </div>
+    </div>
+    <div class="mp-section-title">Assigned Visitors</div>
+    ${visitorsHtml}
+    <div class="mp-log-history">
+      <div class="mp-section-title">Recent Contact Log</div>
+      ${logHtml}
+    </div>`;
+}
+
+function closeMemberModal(e) {
+  if (!e || e.target===document.getElementById('memberModalOverlay')) {
+    document.getElementById('memberModalOverlay').classList.remove('open');
+    activeMemberId = null;
+  }
+}
+
+function logContact(memberId, visitorId, type) {
+  const m = teamMembers.find(x=>x.id===memberId);
+  const v = visitors.find(x=>x.id===visitorId);
+  if (!m || !v) return;
+
+  // Store pending log context
+  window._pendingLog = { memberId, visitorId, type };
+
+  const isCall = type==='call';
+  const col = isCall ? 'var(--first)' : 'var(--second)';
+  const bg  = isCall ? 'var(--first-bg)' : 'var(--second-bg)';
+
+  document.getElementById('logDialogIcon').style.cssText = `background:${bg};color:${col}`;
+  document.getElementById('logDialogIcon').innerHTML = isCall ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 2.5h3.5l1.5 3.5-2 1.5c.9 1.8 2 3 3.8 3.8l1.5-2 3.5 1.5v3.5C9.5 16 2 8.5 3 2.5z" fill="currentColor" opacity=".8"/></svg>' : '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 3h14a1 1 0 011 1v8a1 1 0 01-1 1H5l-4 3V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
+  document.getElementById('logDialogTitle').textContent = isCall ? 'Log a Call' : 'Log a Text';
+  document.getElementById('logDialogSub').textContent = `Recording contact by ${m.name}`;
+  document.getElementById('logDialogSaveBtn').textContent = isCall ? 'Save Call Log' : 'Save Text Log';
+  document.getElementById('logDialogComment').value = '';
+
+  const vCol = avColor(v.firstName);
+  document.getElementById('logDialogVisitor').innerHTML = `
+    <div style="width:32px;height:32px;border-radius:9px;background:${vCol}22;color:${vCol};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${initials(v)}</div>
+    <div>
+      <div style="font-size:13px;font-weight:600">${v.firstName} ${v.lastName}</div>
+      <div style="font-size:11px;color:var(--mid);margin-top:1px">${v.phone}${v.email?' · '+v.email:''}</div>
+    </div>`;
+
+  document.getElementById('logDialogOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('logDialogComment').focus(), 200);
+}
+
+function saveContactLog() {
+  const p = window._pendingLog;
+  if (!p) return;
+  const comment = document.getElementById('logDialogComment').value.trim();
+  const now = new Date();
+  const dateShort = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  contactLogs.push({ id:Date.now(), memberId:p.memberId, visitorId:p.visitorId, type:p.type, comment, date:now.toISOString(), dateShort });
+  localStorage.setItem('ct_v1_logs', JSON.stringify(contactLogs));
+  const vis2 = visitors.find(v=>v.id===p.visitorId);
+  const mem2 = teamMembers.find(m=>m.id===p.memberId);
+  addAudit(p.type==='call'?'C':'T', p.type==='call'?'Call Logged':'Text Logged', `${mem2?.name||'Team member'} ${p.type==='call'?'called':'texted'} ${vis2?vis2.firstName+' '+vis2.lastName:'a visitor'}${comment?' — "'+comment.slice(0,60)+(comment.length>60?'…':'')+'"':''}`);
+  closeLogDialog();
+  const m = teamMembers.find(x=>x.id===p.memberId);
+  if (m) {
+    const col = avColor(m.name);
+    const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both Groups';
+    renderMemberModalBody(m, col, ini, badgeTxt);
+  }
+  renderTeamPage();
+  const vis = visitors.find(v=>v.id===p.visitorId);
+  showToast(p.type==='call'?'C':'T', p.type==='call'?'Call logged!':'Text logged!', vis?vis.firstName+' '+vis.lastName:'');
+  window._pendingLog = null;
+}
+
+function closeLogDialog() {
+  document.getElementById('logDialogOverlay').classList.remove('open');
+  window._pendingLog = null;
+}
+
+// ── VISITOR MODAL ──
+function openVisitorModal(id) {
+  const v = visitors.find(x=>x.id===id);
+  if (!v) return;
+  activeModalId = id;
+  document.getElementById('vModalName').textContent = `${v.firstName} ${v.lastName}`;
+  document.getElementById('vModalBadge').innerHTML  = v.visitType==='first'
+    ? '<span class="t-badge t-badge-first" style="font-size:12px">First Timer</span>'
+    : '<span class="t-badge t-badge-second" style="font-size:12px">Second Timer</span>';
+  const addr=[v.address,v.city,v.state].filter(Boolean).join(', ')||'Not provided';
+
+  // Build assigned section with interactive picker
+  const assignedIds = v.assignedMemberIds || [];
+  const assignedPickerHtml = teamMembers.length
+    ? `<div class="assign-picker" id="assignPicker">` +
+      teamMembers.map(m => {
+        const col = avColor(m.name);
+        const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const isAssigned = assignedIds.includes(m.id);
+        return `<div class="assign-chip${isAssigned?' assigned':''}" onclick="toggleMemberAssignment(${m.id})">
+          <div class="assign-chip-av" style="background:${col}22;color:${col}">${ini}</div>
+          <div class="assign-chip-info">
+            <div class="assign-chip-name">${m.name}</div>
+            <div class="assign-chip-role">${m.role}${m.phone?' · '+m.phone:''}</div>
+          </div>
+          <div class="assign-chip-check"></div>
+        </div>`;
+      }).join('') + `</div>`
+    : '<div style="font-size:12px;color:var(--mid);font-style:italic">No team members added — <a href="#" onclick="showPage(\'team\',document.querySelectorAll(\'.nav-item\')[3]);closeVisitorModal();return false;" style="color:var(--gold);text-decoration:none">add team members</a></div>';
+
+  document.getElementById('vModalBody').innerHTML = `
+    <div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 1.5h2.5l1 2.5-1.5 1c.7 1.4 1.6 2.3 3 3l1-1.5 2.5 1V11C6.5 11 1 5.5 2 1.5z" fill="currentColor" opacity=".6"/></svg></div><div><div class="md-label">Phone</div><div class="md-value">${v.phone}</div></div></div>
+    <div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M1 4l5.5 3.5L12 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Email</div><div class="md-value">${v.email||'Not provided'}</div></div></div>
+    ${v.gender?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2.5" fill="currentColor" opacity=".6"/><path d="M1 12.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Gender</div><div class="md-value">${v.gender}</div></div></div>`:''}
+    ${v.dob?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2.5" width="11" height="9.5" rx="1.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><line x1="1" y1="5.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><line x1="4" y1="1" x2="4" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><line x1="9" y1="1" x2="9" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Date of Birth</div><div class="md-value">${v.dob}</div></div></div>`:''}
+    ${v.ageGroup?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2.5" fill="currentColor" opacity=".6"/><path d="M1 12.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Age Group</div><div class="md-value">${v.ageGroup}</div></div></div>`:''}
+    <div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1a3.5 3.5 0 013.5 3.5c0 2.5-3.5 7-3.5 7S3 7 3 4.5A3.5 3.5 0 016.5 1z" stroke="currentColor" stroke-width="1.3" opacity=".6"/><circle cx="6.5" cy="4.5" r="1.2" fill="currentColor" opacity=".6"/></svg></div><div><div class="md-label">Address</div><div class="md-value">${addr}</div></div></div>
+    <div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L8 4.5H12l-3 2.2 1.1 3.8-3.6-2.5L2.9 10.5 4 6.7 1 4.5h4L6.5 1z" fill="currentColor" opacity=".6"/></svg></div><div><div class="md-label">How They Found Us</div><div class="md-value">${srcLabel(v.source)}</div></div></div>
+    <div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2.5" width="11" height="9.5" rx="1.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><line x1="1" y1="5.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><line x1="4" y1="1" x2="4" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><line x1="9" y1="1" x2="9" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Registered</div><div class="md-value">${v.date}</div></div></div>
+    ${v.serviceDay?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M6.5 3.5v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Service</div><div class="md-value">${v.serviceDay==='sunday'?'Sunday Service':'Wednesday Service'}</div></div></div>`:''}
+    ${v.programType?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L8 4.5H12l-3 2.2 1.1 3.8-3.6-2.5L2.9 10.5 4 6.7 1 4.5h4L6.5 1z" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/></svg></div><div><div class="md-label">Program</div><div class="md-value">${v.programType==='openheaven'?'Open Heaven':v.programType==='eirene'?'Eirene Sisters Conference':'Other Program'}</div></div></div>`:''}
+    ${v.serviceExperience?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L8 4.5H12l-3 2.2 1.1 3.8-3.6-2.5L2.9 10.5 4 6.7 1 4.5h4L6.5 1z" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/></svg></div><div><div class="md-label">Service Experience</div><div class="md-value" style="color:var(--mid);font-style:italic">"${v.serviceExperience}"</div></div></div>`:''}
+    ${v.growthTrack?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="6" width="2.5" height="6" rx=".8" fill="currentColor" opacity=".6"/><rect x="5.25" y="3.5" width="2.5" height="8.5" rx=".8" fill="currentColor" opacity=".6"/><rect x="9.5" y="1" width="2.5" height="11" rx=".8" fill="currentColor" opacity=".6"/></svg></div><div><div class="md-label">Growth Track Interest</div><div class="md-value" style="font-weight:700;color:${v.growthTrack==='yes'?'var(--second)':'var(--mid)'}">${v.growthTrack==='yes'?'Yes, interested!':'Not right now'}</div></div></div>`:''}
+    ${v.prayer?`<div class="md-row"><div class="md-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M4.5 1.5l-2 4 2 4h4l2-4-2-4z" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/><line x1="6.5" y1="9.5" x2="6.5" y2="12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".6"/></svg></div><div><div class="md-label">Prayer Request</div><div class="md-value" style="color:var(--mid);font-style:italic">"${v.prayer}"</div></div></div>`:''}
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="md-label">Assign Team Members</div>
+        <span style="font-size:10px;color:var(--mid)">${assignedIds.length} assigned</span>
+      </div>
+      <div style="font-size:11px;color:var(--mid);margin-bottom:10px">Tap a member to assign or unassign them to this visitor</div>
+      ${assignedPickerHtml}
+    </div>`;
+
+  document.getElementById('vModalBadge').innerHTML =
+    (v.isWorker ? '<span class="worker-badge"><svg viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Worker</span> ' : '') +
+    (v.visitType==='first'
+      ? '<span class="t-badge t-badge-first" style="font-size:12px">First Timer</span>'
+      : '<span class="t-badge t-badge-second" style="font-size:12px">Second Timer</span>');
+
+  document.getElementById('promoteBtn').style.display = v.visitType==='first' && !v.isWorker ? 'flex' : 'none';
+  const workerBtn = document.getElementById('workerBtn');
+  workerBtn.style.display = v.visitType==='second' ? 'flex' : 'none';
+  workerBtn.textContent = v.isWorker ? 'Remove Worker Status' : 'Mark as Worker';
+  workerBtn.style.background = v.isWorker ? '#6B5A3E' : '#059669';
+  document.getElementById('visitorModalOverlay').classList.add('open');
+}
+function closeVisitorModal(e) {
+  if (!e || e.target===document.getElementById('visitorModalOverlay')) {
+    document.getElementById('visitorModalOverlay').classList.remove('open');
+    activeModalId = null;
+  }
+}
+
+// ── FORM VISIT TYPE TOGGLE ──
+function onVisitTypeChange(type) {
+  document.getElementById('fFirstOnly').classList.toggle('visible', type==='first');
+  document.getElementById('fSecondOnly').classList.toggle('visible', type==='second');
+  const dayOpts = document.getElementById('subDayOpts');
+  const progOpts = document.getElementById('subProgramOpts');
+  dayOpts.classList.toggle('visible', type==='first'||type==='second');
+  progOpts.classList.toggle('visible', type==='special');
+  // Reset sub-radio selections when switching type
+  document.querySelectorAll('input[name="serviceDay"]').forEach(r=>r.checked=false);
+  document.querySelectorAll('input[name="programType"]').forEach(r=>r.checked=false);
+  // Sub-options required logic
+  document.querySelectorAll('input[name="serviceDay"]').forEach(r=>r.required=(type==='first'||type==='second'));
+  document.querySelectorAll('input[name="programType"]').forEach(r=>r.required=(type==='special'));
+}
+
+// ── SAVE VISITOR ──
+function saveVisitor(e) {
+  e.preventDefault();
+  const d = new FormData(e.target);
+  const visitType = d.get('visitType');
+  const serviceDay = d.get('serviceDay')||'';
+  const programType = d.get('programType')||'';
+  // Derive source from programType for special programs
+  const sourceMap = { openheaven:'openheaven', eirene:'other', 'other-program':'other' };
+  const source = visitType==='special' ? (sourceMap[programType]||'other') : d.get('source');
+  const v = {
+    id: Date.now(),
+    firstName: d.get('firstName').trim(),
+    lastName:  d.get('lastName').trim(),
+    phone:     d.get('phone').trim(),
+    email:     d.get('email').trim(),
+    gender:    d.get('gender')||'',
+    ageGroup:  d.get('ageGroup')||'',
+    dob:       d.get('dob')?.trim()||'',
+    address:   d.get('address')?.trim()||'',
+    city:      d.get('city')?.trim()||'',
+    state:     d.get('state')?.trim()||'',
+    source,
+    visitType: visitType==='special' ? 'first' : visitType,
+    serviceDay,
+    programType,
+    prayer:            d.get('prayer')?.trim()||'',
+    serviceExperience: d.get('serviceExperience')?.trim()||'',
+    growthTrack:       d.get('growthTrack')||'',
+    date:    new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
+    dateRaw: new Date().toISOString()
+  };
+  visitors.unshift(v);
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  const typeLabel = visitType==='special' ? programType==='openheaven'?'Open Heaven':programType==='eirene'?'Eirene Sisters':'Special Program' : visitType==='first'?'First Timer':'Second Timer';
+  addAudit('+','Visitor Registered',`${v.firstName} ${v.lastName} registered as ${typeLabel}${v.serviceDay?' ('+v.serviceDay+')':''}`);
+  e.target.reset();
+  document.getElementById('fFirstOnly').classList.remove('visible');
+  document.getElementById('fSecondOnly').classList.remove('visible');
+  document.getElementById('subDayOpts').classList.remove('visible');
+  document.getElementById('subProgramOpts').classList.remove('visible');
+  refreshAll();
+  showToast('✓',`${v.firstName} registered!`,`Saved as ${typeLabel}`);
+  setTimeout(()=>showPage('dashboard',document.querySelector('.nav-item')),1200);
+}
+
+// ── DELETE VISITOR ──
+function deleteVisitor(id) {
+  if (!confirm('Remove this visitor record?')) return;
+  const v = visitors.find(x=>x.id===id);
+  visitors = visitors.filter(v=>v.id!==id);
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  if (v) addAudit('×','Visitor Deleted',`${v.firstName} ${v.lastName}'s record was removed`);
+  refreshAll();
+  showToast('×','Record deleted','Visitor removed');
+}
+
+// ── PROMOTE ──
+function promoteToSecond() {
+  if (!activeModalId) return;
+  const idx = visitors.findIndex(v=>v.id===activeModalId);
+  if (idx>-1) {
+    const v = visitors[idx];
+    visitors[idx].visitType='second';
+    localStorage.setItem('ct_v1_visitors',JSON.stringify(visitors));
+    addAudit('↑','Visitor Promoted',`${v.firstName} ${v.lastName} promoted to Second Timer`);
+    refreshAll(); closeVisitorModal(); showToast('↑','Promoted!','Visitor is now a Second Timer');
+  }
+}
+
+// ── TOGGLE WORKER ──
+function toggleWorker() {
+  if (!activeModalId) return;
+  const idx = visitors.findIndex(v=>v.id===activeModalId);
+  if (idx === -1) return;
+  const v = visitors[idx];
+  visitors[idx].isWorker = !v.isWorker;
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  const action = visitors[idx].isWorker ? 'marked as a Worker' : 'removed from Workers';
+  addAudit('W', 'Worker Status Updated', `${v.firstName} ${v.lastName} ${action}`);
+  refreshAll();
+  // Re-open modal to reflect change
+  openVisitorModal(activeModalId);
+  showToast('✓', visitors[idx].isWorker ? 'Worker added!' : 'Worker status removed', `${v.firstName} ${v.lastName}`);
+}
+
+// ── ASSIGN TEAM MEMBER TO VISITOR ──
+function toggleMemberAssignment(memberId) {
+  if (!activeModalId) return;
+  const idx = visitors.findIndex(v=>v.id===activeModalId);
+  if (idx===-1) return;
+  if (!visitors[idx].assignedMemberIds) visitors[idx].assignedMemberIds = [];
+  const ids = visitors[idx].assignedMemberIds;
+  const pos = ids.indexOf(memberId);
+  const m = teamMembers.find(x=>x.id===memberId);
+  const v = visitors[idx];
+  if (pos===-1) {
+    ids.push(memberId);
+    addAudit('U+','Visitor Assigned',`${m?.name||'Team member'} assigned to ${v.firstName} ${v.lastName}`);
+  } else {
+    ids.splice(pos,1);
+    addAudit('U×','Assignment Removed',`${m?.name||'Team member'} unassigned from ${v.firstName} ${v.lastName}`);
+  }
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  refreshAll();
+  // Update chips in-place without closing modal
+  document.querySelectorAll('#assignPicker .assign-chip').forEach(chip => {
+    const cId = parseInt(chip.getAttribute('onclick').match(/\d+/)[0]);
+    chip.classList.toggle('assigned', visitors[idx].assignedMemberIds.includes(cId));
+  });
+}
+
+function exportCSV() {
+  if (!visitors.length) { showToast('!','No records','Nothing to export'); return; }
+  const h=['First Name','Last Name','Phone','Email','Address','City','State','Visit Type','Source','Date'];
+  const rows=visitors.map(v=>[v.firstName,v.lastName,v.phone,v.email,v.address,v.city,v.state,v.visitType==='first'?'First Timer':'Second Timer',srcLabel(v.source).replace(/[^\w\s&]/g,'').trim(),v.date].map(x=>`"${(x||'').replace(/"/g,'""')}"`).join(','));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([[h.join(','),...rows].join('\n')],{type:'text/csv'}));
+  a.download=`ConnectTrack_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('↓','Export Ready!',`${visitors.length} records exported`);
+}
+
+// ── AT-RISK: First Timers not returned in 6 months ──
+function renderAtRisk() {
+  const now = new Date();
+  const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
+  const secondTimerPhones = new Set(visitors.filter(v=>v.visitType==='second').map(v=>v.phone.replace(/\s/g,'')));
+
+  const atRisk = visitors.filter(v=>{
+    if (v.visitType!=='first') return false;
+    const d = v.dateRaw ? new Date(v.dateRaw) : parseDateStr(v.date);
+    if (!d || isNaN(d)) return false;
+    const monthsAgo = (now - d) / (30 * 24 * 60 * 60 * 1000);
+    if (monthsAgo < 6) return false;
+    // Check if they've returned as second timer (by phone match)
+    return !secondTimerPhones.has(v.phone.replace(/\s/g,''));
+  });
+
+  const el = document.getElementById('atRiskSection');
+  if (!atRisk.length) { el.innerHTML=''; return; }
+
+  el.innerHTML = `
+    <div class="at-risk-card">
+      <div class="at-risk-header">
+        <div>
+          <div class="at-risk-title">At-Risk First Timers</div>
+          <div style="font-size:11px;color:#DC2626;opacity:.7;margin-top:2px">First timers who haven't returned as second timers in 6+ months</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;background:#FEE2E2;color:#DC2626">${atRisk.length} visitor${atRisk.length!==1?'s':''}</span>
+      </div>
+      ${atRisk.map(v=>{
+        const d = v.dateRaw ? new Date(v.dateRaw) : parseDateStr(v.date);
+        const months = Math.floor((now - d) / (30 * 24 * 60 * 60 * 1000));
+        return `<div class="at-risk-row" onclick="openVisitorModal(${v.id})">
+          <div class="v-avatar" style="background:${avColor(v.firstName)}22;color:${avColor(v.firstName)};width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${initials(v)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600">${v.firstName} ${v.lastName}</div>
+            <div style="font-size:11px;color:var(--mid);margin-top:1px">${v.phone}${v.email?' · '+v.email:''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            <span class="at-risk-months">${months} months ago</span>
+            <span style="font-size:10px;color:var(--mid)">${v.date}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── CSV IMPORT ──
+let importParsedRows = [];
+
+function openImportModal() {
+  importParsedRows = [];
+  document.getElementById('importPreviewArea').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  document.getElementById('importDropText').textContent = 'Click to select or drag & drop your CSV file';
+  document.getElementById('importDrop').classList.remove('dragover');
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importModalOverlay').classList.add('open');
+}
+function closeImportModal(e) {
+  if (!e || e.target===document.getElementById('importModalOverlay'))
+    document.getElementById('importModalOverlay').classList.remove('open');
+}
+function importDragOver(e) { e.preventDefault(); document.getElementById('importDrop').classList.add('dragover'); }
+function importDragLeave()  { document.getElementById('importDrop').classList.remove('dragover'); }
+function importDrop(e)      { e.preventDefault(); importDragLeave(); const f=e.dataTransfer.files[0]; if(f) processImportFile(f); }
+function importFileSelected(e) { const f=e.target.files[0]; if(f) processImportFile(f); }
+
+function processImportFile(file) {
+  if (!file.name.endsWith('.csv')) { showToast('!','Wrong file type','Please upload a CSV file'); return; }
+  const reader = new FileReader();
+  reader.onload = e => parseImportCSV(e.target.result, file.name);
+  reader.readAsText(file);
+  document.getElementById('importDropText').textContent = '✓ ' + file.name;
+}
+
+function parseImportCSV(text, filename) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if (lines.length < 2) { showToast('!','Empty file','No data rows found'); return; }
+
+  // Parse CSV respecting quoted fields
+  function parseLine(line) {
+    const res=[]; let cur='', inQ=false;
+    for (let i=0;i<line.length;i++) {
+      const c=line[i];
+      if (c==='"') { inQ=!inQ; }
+      else if (c===','&&!inQ) { res.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    res.push(cur.trim()); return res;
+  }
+
+  const headers = parseLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const rows = lines.slice(1).map(l=>parseLine(l));
+
+  // Column index finder
+  const col = (aliases) => {
+    for (const a of aliases) {
+      const idx = headers.findIndex(h=>h.includes(a.toLowerCase()));
+      if (idx!==-1) return idx;
+    }
+    return -1;
+  };
+
+  const iDate    = col(['date']);
+  const iFName   = col(['first name','firstname']);
+  const iLName   = col(['surname','last name','lastname']);
+  const iPhone   = col(['number','phone','tel']);
+  const iEmail   = col(['email']);
+  const iGender  = col(['gender','sex']);
+  const iDob     = col(['dob','date of birth','birthday']);
+  const iAge     = col(['age group','age']);
+  const iState   = col(['state']);
+  const iAddress = col(['address']);
+  const iLandmark= col(['landmark','area']);
+  const iSource  = col(['how did you hear','source','referred']);
+  const iCaller  = col(['assigned caller','caller']);
+  const iCall    = col(['call comments','comments','notes']);
+  const iPrayer  = col(['prayer points','prayer']);
+
+  // Source mapping
+  const mapSource = s => {
+    if (!s||s==='-'||s==='nil') return 'other';
+    s = s.toLowerCase();
+    if (s.includes('family')||s.includes('friend')||s.includes('sister')||s.includes('brother')||s.includes('uncle')||s.includes('relative')||s.includes('member')) return 'family';
+    if (s.includes('instagram')) return 'instagram';
+    if (s.includes('facebook')) return 'facebook';
+    if (s.includes('twitter')) return 'twitter';
+    if (s.includes('youtube')) return 'youtube';
+    if (s.includes('open heaven')||s.includes('openheaven')) return 'openheaven';
+    if (s.includes('social media')||s.includes('social')) return 'instagram';
+    return 'other';
+  };
+
+  const serviceType = document.querySelector('input[name="importService"]:checked')?.value || 'sunday-first';
+  const visitType   = serviceType.includes('second') ? 'second' : 'first';
+  const serviceDay  = serviceType.includes('wednesday') ? 'wednesday' : serviceType.includes('sunday') ? 'sunday' : '';
+  const programType = serviceType==='openheaven' ? 'openheaven' : serviceType==='eirene' ? 'eirene' : '';
+  const forceSource = (serviceType==='openheaven'||serviceType==='wednesday-first'||serviceType==='wednesday-second') ? 'openheaven' : serviceType==='eirene' ? 'other' : null;
+
+  importParsedRows = rows.map(r => {
+    const get = i => (i!==-1 && r[i]) ? r[i].replace(/^"|"$/g,'').trim() : '';
+    const phone = get(iPhone).replace(/[^\d+]/g,'').replace(/^0/,'+234') || 'N/A';
+    const rawDate = get(iDate);
+    const dateRaw = parseImportDate(rawDate);
+    return {
+      id: Date.now() + Math.random(),
+      firstName:  get(iFName)  || '(Unknown)',
+      lastName:   get(iLName),
+      phone,
+      email:      get(iEmail).toLowerCase() === 'nil' ? '' : get(iEmail),
+      gender:     get(iGender),
+      dob:        get(iDob).toLowerCase() === 'nil' ? '' : get(iDob),
+      ageGroup:   get(iAge).toLowerCase() === 'nil' ? '' : get(iAge),
+      state:      get(iState),
+      address:    get(iAddress),
+      city:       get(iLandmark),
+      country:    'Nigeria',
+      source:     forceSource || mapSource(get(iSource)),
+      visitType,
+      serviceDay,
+      programType,
+      prayer:     get(iPrayer).toLowerCase() === 'nil' ? '' : get(iPrayer),
+      importedCallComment: get(iCall).toLowerCase() === 'nil' ? '' : get(iCall),
+      importedCaller: get(iCaller).toLowerCase() === 'nil' ? '' : get(iCaller),
+      date:       rawDate || 'Imported',
+      dateRaw:    dateRaw || new Date().toISOString(),
+      serviceExperience: '', growthTrack: ''
+    };
+  }).filter(r => r.firstName !== '(Unknown)' || r.phone !== 'N/A');
+
+  renderImportPreview(serviceType);
+}
+
+function parseImportDate(s) {
+  if (!s) return null;
+  // e.g. "13th April", "13th April 2025", "25th May"
+  const clean = s.replace(/(st|nd|rd|th)/gi,'').trim();
+  const d = new Date(clean + (clean.match(/\d{4}/) ? '' : ' 2025'));
+  return isNaN(d) ? null : d.toISOString();
+}
+
+function renderImportPreview(serviceType) {
+  if (!importParsedRows.length) return;
+  const el = document.getElementById('importPreview');
+  const existing = new Set(visitors.map(v=>v.phone.replace(/\s/g,'')));
+  const newRows = importParsedRows.filter(r=>!existing.has(r.phone.replace(/\s/g,'')));
+  const dupRows = importParsedRows.length - newRows.length;
+
+  document.getElementById('importStatus').innerHTML =
+    `Found <span>${importParsedRows.length}</span> records · <span style="color:var(--success)">${newRows.length} new</span>${dupRows>0?` · <span style="color:var(--mid)">${dupRows} duplicates skipped</span>`:''}`;
+
+  const serviceLabels = { 'sunday-first':'Sunday First Timer','sunday-second':'Sunday Second Timer','wednesday-first':'Wednesday First Timer','wednesday-second':'Wednesday Second Timer','openheaven':'Open Heaven','eirene':'Eirene Sisters' };
+  const serviceLabel = serviceLabels[serviceType] || serviceType;
+  el.innerHTML = `<table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Location</th><th>Source</th><th>Service</th></tr></thead>
+    <tbody>${newRows.slice(0,20).map(r=>`<tr>
+      <td style="font-weight:600">${r.firstName} ${r.lastName}</td>
+      <td>${r.phone}</td>
+      <td style="color:var(--mid)">${r.email||'—'}</td>
+      <td style="color:var(--mid)">${[r.city,r.state].filter(Boolean).join(', ')||'—'}</td>
+      <td><span class="t-src" style="font-size:9px">${srcLabel(r.source)}</span></td>
+      <td style="font-size:10px;color:var(--mid)">${serviceLabel}</td>
+    </tr>`).join('')}
+    ${newRows.length>20?`<tr><td colspan="6" style="text-align:center;color:var(--mid);font-style:italic;padding:10px">... and ${newRows.length-20} more</td></tr>`:''}
+    </tbody></table>`;
+
+  document.getElementById('importPreviewArea').style.display = 'block';
+  document.getElementById('importConfirmBtn').style.display = newRows.length ? 'flex' : 'none';
+  document.getElementById('importConfirmBtn').textContent = `Import ${newRows.length} Records`;
+}
+
+function confirmImport() {
+  const existing = new Set(visitors.map(v=>v.phone.replace(/\s/g,'')));
+  const newRows = importParsedRows.filter(r=>!existing.has(r.phone.replace(/\s/g,'')));
+  newRows.forEach(r => {
+    const comment = r.importedCallComment;
+    const caller  = r.importedCaller;
+    delete r.importedCallComment;
+    delete r.importedCaller;
+    r.id = Date.now() + Math.random()*1000|0;
+    visitors.push(r);
+    // If there's a call comment, log it
+    if (comment) {
+      const matchedMember = teamMembers.find(m=>m.name.toLowerCase().includes(caller.toLowerCase().split(' ')[0]));
+      const memberId = matchedMember ? matchedMember.id : (teamMembers[0]?.id || 0);
+      if (memberId) {
+        contactLogs.push({ id:Date.now()+Math.random()*999|0, memberId, visitorId:r.id, type:'call', comment, date:r.dateRaw, dateShort: r.date });
+      }
+    }
+  });
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  localStorage.setItem('ct_v1_logs', JSON.stringify(contactLogs));
+  addAudit('↑↑','CSV Import',`${newRows.length} visitor records imported from Google Sheet`);
+  closeImportModal();
+  refreshAll();
+  showToast('✓',`${newRows.length} records imported!`,'Dashboard updated');
+}
+
+// ── ASSIGN VISITOR MODAL (from team page) ──
+function openAssignVisitorModal(memberId) {
+  const m = teamMembers.find(x=>x.id===memberId);
+  if (!m) return;
+  document.getElementById('avModalTitle').textContent = `Assign Visitors to ${m.name.split(' ')[0]}`;
+  document.getElementById('avModalSub').textContent = `${m.role} — tap visitors to assign or unassign`;
+  const body = document.getElementById('avModalBody');
+  if (!visitors.length) {
+    body.innerHTML='<div style="font-size:13px;color:var(--mid);text-align:center;padding:24px">No visitors registered yet</div>';
+  } else {
+    const groups = [
+      { label:'First Timers', list: visitors.filter(v=>v.visitType==='first') },
+      { label:'Second Timers', list: visitors.filter(v=>v.visitType==='second') },
+    ];
+    body.innerHTML = groups.map(g => {
+      if (!g.list.length) return '';
+      return `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);margin:12px 0 6px">${g.label}</div>` +
+        g.list.map(v => {
+          const ids = v.assignedMemberIds || [];
+          const isAssigned = ids.includes(memberId);
+          const col = avColor(v.firstName);
+          return `<div class="assign-chip${isAssigned?' assigned':''}" onclick="toggleVisitorAssignment(${memberId},${v.id},this)">
+            <div class="assign-chip-av" style="background:${col}22;color:${col}">${initials(v)}</div>
+            <div class="assign-chip-info">
+              <div class="assign-chip-name">${v.firstName} ${v.lastName}</div>
+              <div class="assign-chip-role">${v.phone}${v.date?' · '+v.date:''}</div>
+            </div>
+            <div class="assign-chip-check"></div>
+          </div>`;
+        }).join('');
+    }).join('');
+  }
+  document.getElementById('assignVisitorOverlay').classList.add('open');
+}
+
+function toggleVisitorAssignment(memberId, visitorId, chipEl) {
+  const idx = visitors.findIndex(v=>v.id===visitorId);
+  if (idx===-1) return;
+  if (!visitors[idx].assignedMemberIds) visitors[idx].assignedMemberIds = [];
+  const ids = visitors[idx].assignedMemberIds;
+  const pos = ids.indexOf(memberId);
+  const m = teamMembers.find(x=>x.id===memberId);
+  const v = visitors[idx];
+  if (pos===-1) {
+    ids.push(memberId);
+    addAudit('U+','Visitor Assigned',`${m?.name||'Team member'} assigned to ${v.firstName} ${v.lastName}`);
+    chipEl.classList.add('assigned');
+  } else {
+    ids.splice(pos,1);
+    addAudit('U×','Assignment Removed',`${m?.name||'Team member'} unassigned from ${v.firstName} ${v.lastName}`);
+    chipEl.classList.remove('assigned');
+  }
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  renderTeamPage();
+}
+
+function closeAssignVisitorModal(e) {
+  if (!e || e.target===document.getElementById('assignVisitorOverlay'))
+    document.getElementById('assignVisitorOverlay').classList.remove('open');
+}
+function addAudit(icon, action, detail) {
+  const now = new Date();
+  auditLog.unshift({ id:Date.now(), icon, action, detail, who: currentUser||'System', time: now.toISOString(), timeShort: now.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) });
+  if (auditLog.length > 500) auditLog = auditLog.slice(0,500);
+  localStorage.setItem('ct_v1_audit', JSON.stringify(auditLog));
+}
+
+function renderAuditPage() {
+  const el = document.getElementById('auditPageContent');
+  if (!el) return;
+  if (!auditLog.length) {
+    el.innerHTML=`<div class="empty-state"><div class="es-text">No actions logged yet</div></div>`;
+    return;
+  }
+  const iconBg = { '+':'#F0FDF4','×':'#FEF2F2','↑':'var(--second-bg)','C':'var(--first-bg)','T':'var(--second-bg)','↑↑':'#FFF7ED','U+':'#FEF9EC','U×':'#FEF2F2','S':'rgba(201,168,76,.1)','W':'#F0FDF4' };
+  el.innerHTML = auditLog.map(e=>{
+    const bg = iconBg[e.icon]||'var(--soft)';
+    return `<div class="audit-entry">
+      <div class="audit-icon" style="background:${bg}">${e.icon}</div>
+      <div class="audit-body">
+        <div class="audit-action">${e.action}</div>
+        <div class="audit-detail">${e.detail}</div>
+        <div class="audit-meta">
+          <span class="audit-who">${e.who}</span>
+          <span style="opacity:.7">${e.timeShort}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TEAM MEMBERS PAGE ──
+function renderTeamPage() {
+  const el = document.getElementById('teamPageContent');
+  const sub = document.getElementById('teamPageSub');
+  if (!el) return;
+  if (sub) sub.textContent = `${teamMembers.length} member${teamMembers.length!==1?'s':''} in the follow-up team`;
+  if (!teamMembers.length) {
+    el.innerHTML=`<div class="empty-state card" style="padding:48px 20px"><div class="es-text">No team members yet — click "Add Team Member" to get started</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">` +
+    teamMembers.map(m=>{
+      const col = avColor(m.name);
+      const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const assigned = getAssignedVisitors(m);
+      const logs = contactLogs.filter(l=>l.memberId===m.id);
+      const calls = logs.filter(l=>l.type==='call').length;
+      const texts = logs.filter(l=>l.type==='text').length;
+      const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both';
+      const badgeCls = m.assign==='first'?'tm-first':m.assign==='second'?'tm-second':'tm-both';
+      return `<div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--soft);cursor:pointer;transition:background .15s" onclick="openMemberModal(${m.id})" title="View full profile">
+          <div class="tm-page-card-av" style="background:${col}22;color:${col}">${ini}</div>
+          <div style="flex:1;min-width:0">
+            <div class="tm-page-card-name">${m.name} <span style="font-size:10px;color:var(--mid);font-weight:400;margin-left:4px">View profile →</span></div>
+            <div class="tm-page-card-role">${m.role}${m.phone?' · '+m.phone:''}</div>
+            <div class="tm-page-card-stats">
+              <span class="tm-page-pill tm-page-visitors">${assigned.length} visitors</span>
+              <span class="tm-page-pill tm-page-calls">${calls} calls</span>
+              <span class="tm-page-pill tm-page-texts">${texts} texts</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+            <span class="tm-assign ${badgeCls}" style="font-size:10px">${badgeTxt}</span>
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:10px" onclick="event.stopPropagation();openAssignVisitorModal(${m.id})">Assign Visitor</button>
+              <button class="tm-del" onclick="event.stopPropagation();deleteTeamMember(${m.id})" title="Remove"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 5.5v4M8.5 5.5v4M3 3.5l.5 7h6l.5-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 18px 14px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);margin-bottom:8px">Assigned Visitors</div>
+          ${assigned.length ? assigned.slice(0,5).map(v=>{
+            const lastCall = logs.filter(l=>l.visitorId===v.id&&l.type==='call').slice(-1)[0];
+            const lastText = logs.filter(l=>l.visitorId===v.id&&l.type==='text').slice(-1)[0];
+            return `<div class="tm-page-v-row" style="cursor:default">
+              <div style="width:28px;height:28px;border-radius:7px;background:${avColor(v.firstName)}22;color:${avColor(v.firstName)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${initials(v)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.firstName} ${v.lastName}${v.isWorker?' <span class="worker-badge" style="font-size:9px;padding:1px 6px">Worker</span>':''}</div>
+                <div style="font-size:10px;color:var(--mid)">${v.visitType==='first'?'First Timer':'Second Timer'} · ${v.phone}</div>
+                ${lastCall||lastText?`<div style="font-size:9px;color:var(--mid);margin-top:2px">${lastCall?'Last call: '+lastCall.dateShort:''}${lastCall&&lastText?' · ':''}${lastText?'Last text: '+lastText.dateShort:''}</div>`:''}
+              </div>
+              <div style="display:flex;gap:5px;flex-shrink:0">
+                <button class="mp-log-btn call${lastCall?' logged':''}" style="font-size:10px;padding:4px 10px" onclick="logContact(${m.id},${v.id},'call')">${lastCall?'Called':'Call'}</button>
+                <button class="mp-log-btn text${lastText?' logged':''}" style="font-size:10px;padding:4px 10px" onclick="logContact(${m.id},${v.id},'text')">${lastText?'Texted':'Text'}</button>
+              </div>
+            </div>`;
+          }).join('') + (assigned.length>5?`<div style="font-size:11px;color:var(--mid);text-align:center;padding:8px 0;font-style:italic;cursor:pointer" onclick="openMemberModal(${m.id})">+${assigned.length-5} more — view full profile</div>`:'')
+          : '<div style="font-size:12px;color:var(--mid);font-style:italic">No visitors assigned yet</div>'}
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+// ── GLOBAL PASTOR'S VIEW ──
+function renderPastorPage() {
+  const el = document.getElementById('pastorPageContent');
+  if (!el) return;
+  const total   = visitors.length;
+  const first   = visitors.filter(v=>v.visitType==='first').length;
+  const second  = visitors.filter(v=>v.visitType==='second').length;
+  const now     = new Date();
+  const thisMonthV = visitors.filter(v=>{ const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date); return d&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth(); }).length;
+  const sixMonthsMs = 6*30*24*60*60*1000;
+  const secondPhones = new Set(visitors.filter(v=>v.visitType==='second').map(v=>v.phone.replace(/\s/g,'')));
+  const atRisk = visitors.filter(v=>{ if(v.visitType!=='first') return false; const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date); return d&&(now-d)>=sixMonthsMs&&!secondPhones.has(v.phone.replace(/\s/g,'')); }).length;
+  const growthYes = visitors.filter(v=>v.growthTrack==='yes').length;
+  const workers   = visitors.filter(v=>v.isWorker).length;
+  const convRate  = second > 0 ? Math.round((workers/second)*100) : 0;
+  const returnRate = total>0 ? Math.round((second/total)*100) : 0;
+  const totalCalls = contactLogs.filter(l=>l.type==='call').length;
+  const totalTexts = contactLogs.filter(l=>l.type==='text').length;
+
+  // Source breakdown
+  const srcCount = {};
+  visitors.forEach(v=>{ srcCount[v.source]=(srcCount[v.source]||0)+1; });
+  const topSources = Object.entries(srcCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxSrc = topSources[0]?.[1]||1;
+
+  // Service day breakdown
+  const sundayCount = visitors.filter(v=>v.serviceDay==='sunday').length;
+  const wedCount    = visitors.filter(v=>v.serviceDay==='wednesday').length;
+
+  // Age group breakdown
+  const ageCount = {};
+  visitors.forEach(v=>{ if(v.ageGroup) ageCount[v.ageGroup]=(ageCount[v.ageGroup]||0)+1; });
+  const topAges = Object.entries(ageCount).sort((a,b)=>b[1]-a[1]);
+  const maxAge = topAges[0]?.[1]||1;
+
+  // Team performance
+  const teamPerf = teamMembers.map(m=>({
+    name: m.name.split(' ').slice(-1)[0],
+    calls: contactLogs.filter(l=>l.memberId===m.id&&l.type==='call').length,
+    texts: contactLogs.filter(l=>l.memberId===m.id&&l.type==='text').length,
+    assigned: getAssignedVisitors(m).length
+  })).sort((a,b)=>(b.calls+b.texts)-(a.calls+a.texts));
+
+  // Key insights
+  const insights = [];
+  if (workers>0) insights.push({icon:'+',text:`<strong>${workers} visitor${workers!==1?'s':''}</strong> have become workers — ${convRate}% conversion from second timers`});
+  if (atRisk>0) insights.push({icon:'!',text:`<strong>${atRisk} first timer${atRisk!==1?'s':''}</strong> haven't returned in 6+ months and need follow-up`});
+  if (growthYes>0) insights.push({icon:'↑',text:`<strong>${growthYes} visitor${growthYes!==1?'s':''}</strong> expressed interest in Growth Track enrollment`});
+  if (returnRate>0) insights.push({icon:'↩',text:`Return rate is <strong>${returnRate}%</strong> — ${second} of ${total} visitors came back as second timers`});
+  if (thisMonthV>0) insights.push({icon:'+',text:`<strong>${thisMonthV} new visitor${thisMonthV!==1?'s':''}</strong> registered this month`});
+  if (totalCalls+totalTexts>0) insights.push({icon:'C',text:`Team has made <strong>${totalCalls} calls</strong> and sent <strong>${totalTexts} texts</strong> to visitors`});
+
+  if (!total) {
+    el.innerHTML = `<div class="empty-state card" style="padding:60px 20px"><div class="es-text">Register visitors to see the pastor's overview</div></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="pastor-grid">
+      <div class="pastor-big-stat"><div class="pastor-big-num" style="color:var(--gold)">${total}</div><div class="pastor-big-lbl">Total Visitors</div></div>
+      <div class="pastor-big-stat"><div class="pastor-big-num" style="color:var(--first)">${first}</div><div class="pastor-big-lbl">First Timers</div></div>
+      <div class="pastor-big-stat"><div class="pastor-big-num" style="color:var(--second)">${second}</div><div class="pastor-big-lbl">Second Timers</div></div>
+      <div class="pastor-big-stat"><div class="pastor-big-num" style="color:var(--danger)">${atRisk}</div><div class="pastor-big-lbl">At-Risk (6 mo.)</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px">
+      <div class="pastor-big-stat" style="padding:14px"><div style="font-size:11px;color:var(--mid);margin-bottom:6px">Return Rate</div><div style="font-size:28px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--second)">${returnRate}%</div></div>
+      <div class="pastor-big-stat" style="padding:14px"><div style="font-size:11px;color:var(--mid);margin-bottom:6px">Workers</div><div style="font-size:28px;font-weight:700;font-family:'Cormorant Garamond',serif;color:#059669">${workers}</div></div>
+      <div class="pastor-big-stat" style="padding:14px"><div style="font-size:11px;color:var(--mid);margin-bottom:6px">2nd Timer → Worker</div><div style="font-size:28px;font-weight:700;font-family:'Cormorant Garamond',serif;color:#059669">${convRate}%</div></div>
+      <div class="pastor-big-stat" style="padding:14px"><div style="font-size:11px;color:var(--mid);margin-bottom:6px">Growth Track Interest</div><div style="font-size:28px;font-weight:700;font-family:'Cormorant Garamond',serif;color:#7C3AED">${growthYes}</div></div>
+    </div>
+
+    <div class="pastor-row">
+      <div class="pastor-card">
+        <div class="pastor-card-hdr">Source Breakdown</div>
+        <div class="pastor-card-body">
+          ${topSources.map(([src,cnt])=>`
+            <div class="pastor-bar-row">
+              <div class="pastor-bar-label">${srcLabel(src).replace(/[^\w\s]/g,'').trim()||src}</div>
+              <div class="pastor-bar-track"><div class="pastor-bar-fill" style="width:${Math.round(cnt/maxSrc*100)}%;background:var(--gold)"></div></div>
+              <div class="pastor-bar-count">${cnt}</div>
+            </div>`).join('')}
+          ${!topSources.length?'<div style="font-size:12px;color:var(--mid);font-style:italic">No source data yet</div>':''}
+        </div>
+      </div>
+      <div class="pastor-card">
+        <div class="pastor-card-hdr">Age Group Distribution</div>
+        <div class="pastor-card-body">
+          ${topAges.map(([age,cnt])=>`
+            <div class="pastor-bar-row">
+              <div class="pastor-bar-label">${age}</div>
+              <div class="pastor-bar-track"><div class="pastor-bar-fill" style="width:${Math.round(cnt/maxAge*100)}%;background:var(--second)"></div></div>
+              <div class="pastor-bar-count">${cnt}</div>
+            </div>`).join('')}
+          ${!topAges.length?'<div style="font-size:12px;color:var(--mid);font-style:italic">No age data captured yet</div>':''}
+        </div>
+      </div>
+    </div>
+
+    <div class="pastor-row">
+      <div class="pastor-card">
+        <div class="pastor-card-hdr">Team Performance</div>
+        <div class="pastor-card-body">
+          ${teamPerf.length ? teamPerf.map(m=>`
+            <div class="pastor-bar-row" style="margin-bottom:12px">
+              <div class="pastor-bar-label" style="width:110px">${m.name}</div>
+              <div style="flex:1">
+                <div style="font-size:10px;color:var(--mid);margin-bottom:3px">${m.assigned} assigned · ${m.calls} calls · ${m.texts} texts</div>
+                <div style="display:flex;gap:4px">
+                  ${m.calls?`<div style="height:6px;background:var(--first);border-radius:20px;width:${Math.min(m.calls*6,80)}px"></div>`:''}
+                  ${m.texts?`<div style="height:6px;background:var(--second);border-radius:20px;width:${Math.min(m.texts*6,80)}px"></div>`:''}
+                </div>
+              </div>
+            </div>`).join('') : '<div style="font-size:12px;color:var(--mid);font-style:italic">No team members added yet</div>'}
+        </div>
+      </div>
+      <div class="pastor-card">
+        <div class="pastor-card-hdr">Key Insights</div>
+        <div class="pastor-card-body">
+          ${insights.length ? insights.map(i=>`<div class="pastor-insight"><div class="pastor-insight-icon">${i.icon}</div><div class="pastor-insight-text">${i.text}</div></div>`).join('') : '<div style="font-size:12px;color:var(--mid);font-style:italic">Register visitors to see insights</div>'}
+          ${(sundayCount||wedCount)?`<div class="pastor-insight"><div class="pastor-insight-icon" style="flex-shrink:0"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4" opacity=".6"/><line x1="1" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.3" opacity=".6"/><line x1="5" y1="1" x2="5" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".6"/><line x1="11" y1="1" x2="11" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></svg></div><div class="pastor-insight-text"><strong>${sundayCount}</strong> Sunday visitors · <strong>${wedCount}</strong> Wednesday visitors</div></div>`:''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── TOAST ──
+function showToast(icon,title,sub) {
+  const t=document.getElementById('toast');
+  document.getElementById('toastIcon').textContent=icon;
+  document.getElementById('toastTitle').textContent=title;
+  document.getElementById('toastSub').textContent=sub;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── SEED ──
+function seed() {
+  if (visitors.length||teamMembers.length) return;
+  visitors = [
+    {id:1001,firstName:'Adaeze',lastName:'Okonkwo',phone:'+234 803 111 2233',email:'adaeze@gmail.com',address:'12 Awolowo Rd',city:'Lagos',state:'Lagos',source:'family',visitType:'first',serviceDay:'sunday',gender:'Female',ageGroup:'21-30',dob:'March 3rd',prayer:'Pray for my family',serviceExperience:'The worship was amazing, felt very welcome!',growthTrack:'',date:'March 16, 2026',dateRaw:'2026-03-16T09:00:00.000Z'},
+    {id:1002,firstName:'Emmanuel',lastName:'Balogun',phone:'+234 706 554 4321',email:'emma.b@yahoo.com',address:'5 Broad St',city:'Ikeja',state:'Lagos',source:'instagram',visitType:'second',serviceDay:'sunday',gender:'Male',ageGroup:'21-30',dob:'July 12th',prayer:'',serviceExperience:'',growthTrack:'yes',isWorker:true,date:'March 16, 2026',dateRaw:'2026-03-16T09:00:00.000Z'},
+    {id:1003,firstName:'Grace',lastName:'Nwachukwu',phone:'+234 817 223 9988',email:'grace.n@gmail.com',address:'8 Airport Rd',city:'Port Harcourt',state:'Rivers',source:'facebook',visitType:'first',serviceDay:'sunday',gender:'Female',ageGroup:'31-40',dob:'November 19th',prayer:'Looking for a church home',serviceExperience:'Service was powerful, loved the message.',growthTrack:'',date:'March 9, 2026',dateRaw:'2026-03-09T09:00:00.000Z'},
+    {id:1004,firstName:'Kofi',lastName:'Mensah',phone:'+233 244 556 677',email:'kofi.m@gmail.com',address:'',city:'Accra',state:'Greater Accra',source:'youtube',visitType:'first',serviceDay:'wednesday',gender:'Male',ageGroup:'21-30',dob:'',prayer:'',serviceExperience:'Very different from what I expected — in a great way.',growthTrack:'',date:'March 12, 2026',dateRaw:'2026-03-12T09:00:00.000Z'},
+    {id:1005,firstName:'Blessing',lastName:'Eze',phone:'+234 805 776 9900',email:'blessing@hotmail.com',address:'24 Unity St',city:'Abuja',state:'FCT',source:'family',visitType:'second',serviceDay:'sunday',gender:'Female',ageGroup:'31-40',dob:'January 8th',prayer:'',serviceExperience:'',growthTrack:'yes',date:'March 2, 2026',dateRaw:'2026-03-02T09:00:00.000Z'},
+    {id:1006,firstName:'Chioma',lastName:'Okafor',phone:'+234 812 334 5566',email:'chioma@gmail.com',address:'3 Bank Rd',city:'Enugu',state:'Enugu',source:'twitter',visitType:'first',serviceDay:'sunday',gender:'Female',ageGroup:'21-30',dob:'May 22nd',prayer:'Healing for my mum',serviceExperience:'Felt the presence of God strongly.',growthTrack:'yes',date:'March 5, 2026',dateRaw:'2026-03-05T09:00:00.000Z'},
+    {id:1007,firstName:'Tunde',lastName:'Adeyemi',phone:'+234 701 998 4432',email:'tunde.a@gmail.com',address:'17 Marina St',city:'Lagos',state:'Lagos',source:'family',visitType:'second',serviceDay:'wednesday',gender:'Male',ageGroup:'41-50',dob:'October 14th',prayer:'',serviceExperience:'',growthTrack:'yes',isWorker:true,date:'March 12, 2026',dateRaw:'2026-03-12T09:00:00.000Z'},
+    {id:1008,firstName:'Ngozi',lastName:'Ibe',phone:'+234 802 445 6677',email:'ngozi.ibe@gmail.com',address:'4 Aba Rd',city:'Aba',state:'Abia',source:'family',visitType:'first',serviceDay:'sunday',gender:'Female',ageGroup:'21-30',dob:'August 2nd',prayer:'',serviceExperience:'Loved the children section.',growthTrack:'',date:'August 10, 2025',dateRaw:'2025-08-10T09:00:00.000Z'},
+    {id:1009,firstName:'Chukwuemeka',lastName:'Obi',phone:'+234 703 887 2211',email:'',address:'',city:'Asaba',state:'Delta',source:'instagram',visitType:'first',serviceDay:'sunday',gender:'Male',ageGroup:'31-40',dob:'',prayer:'',serviceExperience:'',growthTrack:'',date:'July 21, 2025',dateRaw:'2025-07-21T09:00:00.000Z'},
+    {id:1010,firstName:'Amara',lastName:'Nwosu',phone:'+234 813 667 4490',email:'amara.n@yahoo.com',address:'9 Zik Ave',city:'Awka',state:'Anambra',source:'openheaven',visitType:'first',serviceDay:'wednesday',gender:'Female',ageGroup:'21-30',dob:'June 5th',prayer:'Pray for my business',serviceExperience:'Open Heaven service was transformative.',growthTrack:'yes',date:'June 1, 2025',dateRaw:'2025-06-01T09:00:00.000Z'},
+  ];
+  teamMembers = [
+    {id:2001,name:'Pastor Amaka Dike',role:'First Timer Coordinator',phone:'+234 803 221 4455',assign:'first'},
+    {id:2002,name:'Deacon Tunde Bakare',role:'Follow-up Lead',phone:'+234 706 334 7788',assign:'second'},
+    {id:2003,name:'Sister Ngozi Obi',role:'Welcome Team Lead',phone:'+234 812 556 8899',assign:'both'},
+    {id:2004,name:'Bro. Samuel Eze',role:'New Members Liaison',phone:'+234 805 112 3344',assign:'first'},
+  ];
+  localStorage.setItem('ct_v1_visitors', JSON.stringify(visitors));
+  localStorage.setItem('ct_v1_team',     JSON.stringify(teamMembers));
+}
+
+seed();
+init();
+</script>
+</body>
+</html>
