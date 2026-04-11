@@ -899,6 +899,24 @@ textarea{resize:vertical;min-height:80px}
 .emailjs-setup{background:#FEF9EC;border:1px solid #FCD34D;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400E}
 .emailjs-setup a{color:#B45309;font-weight:600}
 
+
+/* ── LOGIN HISTORY (admin only) ── */
+.login-history-card{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+.login-history-hdr{padding:14px 20px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--deep),#1E3A5F);display:flex;align-items:center;justify-content:space-between}
+.login-history-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:white}
+.login-history-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(212,160,23,.2);color:var(--gold-mid);border:1px solid rgba(212,160,23,.25)}
+.login-entry{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);transition:background .15s}
+.login-entry:last-child{border-bottom:none}
+.login-entry:hover{background:var(--soft)}
+.login-entry-av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.login-entry-info{flex:1;min-width:0}
+.login-entry-name{font-size:13px;font-weight:700;color:var(--deep)}
+.login-entry-role{font-size:11px;color:var(--mid);margin-top:1px}
+.login-entry-time{text-align:right;flex-shrink:0}
+.login-entry-date{font-size:12px;font-weight:600;color:var(--ink)}
+.login-entry-ago{font-size:10px;color:var(--muted);margin-top:2px}
+.login-entry-device{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic}
+
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -1229,6 +1247,8 @@ textarea{resize:vertical;min-height:80px}
 
   <!-- ── AUDIT LOG PAGE ── -->
   <div class="page" id="page-audit">
+    <!-- Admin-only login history -->
+    <div id="loginHistorySection" style="display:none"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div style="font-size:12px;color:var(--mid)">All system actions, timestamped</div>
 <span style="font-size:11px;color:var(--mid);padding:4px 10px;background:var(--soft);border-radius:6px;border:1px solid var(--border)">Read-only · Immutable record</span>
@@ -1815,6 +1835,7 @@ fbAuth.onAuthStateChanged(user => {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('loginError').style.display = 'none';
     applyRoleRestrictions();
+    recordLoginHistory(user);
     loadDataFromFirebase();
   } else {
     showLoginPage();
@@ -1881,6 +1902,86 @@ function migrateSecondTimers() {
   localStorage.setItem(migrationKey, '1');
 }
 
+
+
+// ── LOGIN HISTORY ──
+let loginHistory = [];
+
+function recordLoginHistory(firebaseUser) {
+  if (!fbDb) return;
+  const entry = {
+    id: Date.now(),
+    name: CT_ROLE_MAP[firebaseUser.email]?.name || firebaseUser.email.split('@')[0],
+    role: CT_ROLE_MAP[firebaseUser.email]?.role || 'team-member',
+    email: firebaseUser.email,
+    time: new Date().toISOString(),
+    timeShort: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    userAgent: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
+  };
+  // Push to Firebase loginHistory (admin-readable list)
+  fbDb.ref('connecttrack/loginHistory').transaction(current => {
+    const arr = Array.isArray(current) ? current : [];
+    arr.unshift(entry);
+    return arr.slice(0, 200); // keep last 200 entries
+  });
+}
+
+function renderLoginHistory() {
+  const el = document.getElementById('loginHistorySection');
+  if (!el) return;
+  // Only show to admin
+  if (currentRole !== 'admin') { el.style.display='none'; return; }
+  el.style.display = 'block';
+
+  if (!fbDb) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--mid);margin-bottom:16px">Login history requires Firebase connection.</div>';
+    return;
+  }
+
+  fbDb.ref('connecttrack/loginHistory').once('value').then(snap => {
+    const entries = snap.val() || [];
+    if (!entries.length) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const roleColors = { admin:'#B8860B', 'connect-head':'var(--second)', 'team-member':'var(--first)', pastor:'#DC2626' };
+
+    const rows = entries.map(e => {
+      const col = roleColors[e.role] || 'var(--mid)';
+      const ini = (e.name||'?').slice(0,2).toUpperCase();
+      const ago = timeAgo(new Date(e.time));
+      return `<div class="login-entry">
+        <div class="login-entry-av" style="background:${col}18;color:${col}">${ini}</div>
+        <div class="login-entry-info">
+          <div class="login-entry-name">${e.name}</div>
+          <div class="login-entry-role">${e.role.replace('-',' ')} · ${e.email}</div>
+          <div class="login-entry-device">${e.userAgent}</div>
+        </div>
+        <div class="login-entry-time">
+          <div class="login-entry-date">${e.timeShort}</div>
+          <div class="login-entry-ago">${ago}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="login-history-card">
+      <div class="login-history-hdr">
+        <div class="login-history-title">Login History</div>
+        <span class="login-history-badge">Admin only · Last ${Math.min(entries.length,200)} logins</span>
+      </div>
+      ${rows}
+    </div>`;
+  });
+}
+
+function timeAgo(date) {
+  const secs = Math.floor((new Date() - date) / 1000);
+  if (secs < 60) return 'Just now';
+  if (secs < 3600) return Math.floor(secs/60) + 'm ago';
+  if (secs < 86400) return Math.floor(secs/3600) + 'h ago';
+  return Math.floor(secs/86400) + 'd ago';
+}
 
 // ── FIREBASE HELPERS ──
 function fbSave(key, data) {
@@ -2010,6 +2111,7 @@ function refreshAll() {
   renderTeamPage();
   renderPastorPage();
   renderAuditPage();
+  renderLoginHistory();
   renderGrowthPage();
   renderAttendancePage();
   renderFollowupsPage();
@@ -2030,7 +2132,7 @@ function showPage(id, btn) {
   if (id==='records') renderRecordsTable();
   if (id==='team') renderTeamPage();
   if (id==='pastor') renderPastorPage();
-  if (id==='audit') renderAuditPage();
+  if (id==='audit') { renderAuditPage(); renderLoginHistory(); }
   if (id==='growth') renderGrowthPage();
   if (id==='attendance') renderAttendancePage();
   if (id==='followups') renderFollowupsPage();
