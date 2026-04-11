@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ConnectTrack — Church Visitor Records</title>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&family=Playfair+Display:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -551,10 +556,10 @@ textarea{resize:vertical;min-height:80px}
 .nudge-time{font-size:10px;color:var(--mid);margin-top:3px;opacity:.7}
 
 /* ── SEARCH ── */
-.global-search-wrap{position:relative;flex:1;max-width:380px}
-.global-search-input{width:100%;padding:8px 14px 8px 36px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--deep);background:var(--white);outline:none;transition:all .2s}
+.global-search-wrap{position:relative;flex:1;max-width:380px;display:flex;align-items:center}
+.global-search-input{width:100%;padding:9px 14px 9px 36px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--deep);background:var(--white);outline:none;transition:all .2s}
 .global-search-input:focus{border-color:var(--gold-mid);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
-.global-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mid);pointer-events:none;display:flex;align-items:center;justify-content:center;line-height:0}
+.global-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--mid);pointer-events:none;line-height:1}
 .search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(26,18,7,.12);z-index:300;max-height:380px;overflow-y:auto;display:none}
 .search-results.open{display:block}
 .search-section-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:8px 14px 4px;background:var(--soft)}
@@ -856,6 +861,41 @@ textarea{resize:vertical;min-height:80px}
 .mom-delta.flat{color:var(--mid)}
 /* Peak badge */
 .peak-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--gold-light);color:var(--gold-dark)}
+
+
+/* Contact log in visitor modal */
+.vm-log-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.vm-log-actions{display:flex;gap:8px;margin-bottom:14px}
+.vm-log-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--soft);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;color:var(--ink)}
+.vm-log-btn:hover{border-color:var(--gold-mid);background:var(--gold-light);color:var(--gold-dark)}
+.vm-log-btn.call-btn:hover{border-color:var(--first);background:var(--first-bg);color:var(--first-dark)}
+.vm-log-btn.text-btn:hover{border-color:var(--second);background:var(--second-bg);color:var(--second-dark)}
+.vm-log-history{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.vm-log-entry{background:var(--soft);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+.vm-log-entry-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.vm-log-entry-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.vm-log-entry-type.call{background:var(--first-bg);color:var(--first)}
+.vm-log-entry-type.text{background:var(--second-bg);color:var(--second)}
+.vm-log-entry-who{font-size:10px;color:var(--mid)}
+.vm-log-entry-comment{font-size:12px;color:var(--ink);margin-top:3px;line-height:1.5}
+.vm-log-entry-empty{font-size:11px;color:var(--muted);font-style:italic}
+
+
+/* ── REMINDER MODAL ── */
+.reminder-config{background:var(--soft);border-radius:12px;padding:14px 16px;margin-bottom:16px;border:1px solid var(--border)}
+.reminder-config-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px}
+.reminder-member-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--white);border-radius:10px;border:1px solid var(--border);margin-bottom:8px}
+.reminder-member-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.reminder-member-info{flex:1;min-width:0}
+.reminder-member-name{font-size:13px;font-weight:700}
+.reminder-member-count{font-size:11px;color:var(--mid)}
+.reminder-wa-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;background:#25D366;color:white;font-size:11px;font-weight:700;border:none;cursor:pointer;text-decoration:none;transition:opacity .15s;flex-shrink:0}
+.reminder-wa-btn:hover{opacity:.85}
+.reminder-email-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;background:var(--second);color:white;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:opacity .15s;flex-shrink:0}
+.reminder-email-btn:hover{opacity:.85}
+.reminder-email-btn:disabled{opacity:.4;cursor:not-allowed}
+.emailjs-setup{background:#FEF9EC;border:1px solid #FCD34D;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400E}
+.emailjs-setup a{color:#B45309;font-weight:600}
 
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -1164,7 +1204,13 @@ textarea{resize:vertical;min-height:80px}
       <div>
         <div style="font-size:12px;color:var(--mid)" id="teamPageSub">Managing your follow-up team</div>
       </div>
-      <button class="btn btn-gold" onclick="openTeamModal()">+ Add Team Member</button>
+<div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="openReminderModal()" style="display:flex;align-items:center;gap:7px">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5a4.5 4.5 0 014.5 4.5v2.5l1 1.5h-11l1-1.5V6A4.5 4.5 0 017 1.5z" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 11.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3"/></svg>
+          Send Reminders
+        </button>
+        <button class="btn btn-gold" onclick="openTeamModal()">+ Add Team Member</button>
+      </div>
     </div>
     <div id="teamPageContent"></div>
   </div>
@@ -1596,6 +1642,49 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<!-- ══ SEND REMINDERS MODAL ══ -->
+<div class="modal-overlay" id="reminderModalOverlay" onclick="closeReminderModal(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Send Monday Reminders</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px">Notify team members about their uncontacted visitors</div>
+      </div>
+      <button class="modal-close" onclick="closeReminderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- EmailJS setup notice -->
+      <div class="emailjs-setup" id="emailjsSetupNotice">
+        <strong>Email setup required</strong> — To send emails, enter your 
+        <a href="https://www.emailjs.com" target="_blank">EmailJS</a> credentials below 
+        (free for 200 emails/month). WhatsApp works immediately with no setup.
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+          <div class="f-group"><label style="font-size:10px">Service ID</label><input type="text" id="ejsServiceId" placeholder="service_xxxxxxx" style="margin-top:4px;font-size:12px"></div>
+          <div class="f-group"><label style="font-size:10px">Template ID</label><input type="text" id="ejsTemplateId" placeholder="template_xxxxxxx" style="margin-top:4px;font-size:12px"></div>
+        </div>
+        <div class="f-group" style="margin-top:8px"><label style="font-size:10px">Public Key</label><input type="text" id="ejsPublicKey" placeholder="your_public_key" style="margin-top:4px;font-size:12px"></div>
+        <button class="btn btn-gold" style="margin-top:10px;font-size:12px;padding:7px 16px" onclick="saveEmailJSConfig()">Save Email Config</button>
+      </div>
+      <!-- Per-member list -->
+      <div id="reminderMemberList"></div>
+      <!-- Send all buttons -->
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn" style="flex:1;justify-content:center;background:#25D366;color:white;font-size:12px" onclick="sendAllWhatsApp()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.531 5.846L0 24l6.335-1.508A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.587-.5-5.088-1.375l-.365-.217-3.763.896.945-3.653-.236-.374A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Send All via WhatsApp
+        </button>
+        <button class="btn reminder-email-btn" style="flex:1;justify-content:center;font-size:12px" id="sendAllEmailBtn" onclick="sendAllEmails()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 4l6 4 6-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Send All via Email
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeReminderModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ ASSIGN VISITOR MODAL ══ -->
 <div class="modal-overlay" id="assignVisitorOverlay" onclick="closeAssignVisitorModal(event)">
   <div class="modal" style="max-width:500px">
@@ -1621,18 +1710,39 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 // ── DATA ──
-let visitors    = JSON.parse(localStorage.getItem('ct_v4_visitors') || '[]');
-let attendance  = JSON.parse(localStorage.getItem('ct_v4_attendance') || '[]');
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCT1mQtP2t7iDnbE0VDzzmV8o8Cvv6V3FQ",
+  authDomain: "connect-track-82e3d.firebaseapp.com",
+  databaseURL: "https://connect-track-82e3d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "connect-track-82e3d",
+  storageBucket: "connect-track-82e3d.firebasestorage.app",
+  messagingSenderId: "838104495018",
+  appId: "1:838104495018:web:14a40d7264becc804b31d3"
+};
+let fbAuth, fbDb;
+try {
+  firebase.initializeApp(firebaseConfig);
+  fbAuth = firebase.auth();
+  fbDb   = firebase.database();
+} catch(e) {
+  console.warn('Firebase init failed — running in offline mode:', e.message);
+}
+
+// ── DATA (loaded from Firebase) ──
+let visitors    = [];
+let attendance  = [];
 let campuses    = ['lekki','ikeja','abuja','ibadan','ph'];
 let currentCampus = 'lekki';
-let attFilter = 'all';
-let teamMembers = JSON.parse(localStorage.getItem('ct_v4_team')     || '[]');
-let contactLogs = JSON.parse(localStorage.getItem('ct_v4_logs')     || '[]');
-let auditLog    = JSON.parse(localStorage.getItem('ct_v4_audit')    || '[]');
-let currentUser = localStorage.getItem('ct_v4_user') || '';
-let currentRole = localStorage.getItem('ct_v4_role') || '';
-let tasks       = JSON.parse(localStorage.getItem('ct_v4_tasks') || '[]');
-let nudges      = JSON.parse(localStorage.getItem('ct_v4_nudges') || '[]');
+let attFilter   = 'all';
+let teamMembers = [];
+let contactLogs = [];
+let auditLog    = [];
+let currentUser = '';
+let currentRole = '';
+let tasks       = [];
+let nudges      = [];
+let fbReady     = false; // true once data loaded from Firebase
 let taskFilter  = 'all';
 let currentFilter = 'all';
 let activeModalId = null;
@@ -1646,52 +1756,98 @@ let dashFilter = { type:'all', year:'' };
   old.forEach(k=>localStorage.removeItem(k));
 })();
 
-// ── LOGIN ──
-const CT_USERS = [
-  {username:'admin',     password:'petra2025',  role:'admin',        name:'Admin'},
-  {username:'connecthead',password:'connect2025',role:'connect-head', name:'Connect Head'},
-  {username:'pastor',    password:'pastor2025', role:'pastor',       name:'Pastor'},
-  {username:'team',      password:'team2025',   role:'team-member',  name:'Team Member'},
-];
-function checkLogin() {
-  const sess = sessionStorage.getItem('ct_auth');
-  if (sess) {
-    try {
-      const auth = JSON.parse(sess);
-      currentUser = auth.name;
-      currentRole = auth.role;
-      document.getElementById('loginPage').classList.add('hidden');
-      applyRoleRestrictions();
-    } catch(e) { showLoginPage(); }
-  } else { showLoginPage(); }
-}
-function showLoginPage() { document.getElementById('loginPage').classList.remove('hidden'); }
-function doLogin() {
-  const u = document.getElementById('loginUsername').value.trim().toLowerCase();
-  const p = document.getElementById('loginPassword').value;
-  const user = CT_USERS.find(x=>x.username===u && x.password===p);
-  if (!user) {
-    document.getElementById('loginError').style.display='block';
-    document.getElementById('loginPassword').value='';
-    return;
+// ── LOGIN (Firebase Auth) ──
+const CT_ROLE_MAP = {
+  // Leadership
+  'admin@petra.ct':              { role:'admin',        name:'Admin' },
+  'connecthead@petra.ct':        { role:'connect-head',  name:'Connect Head' },
+  'pastor@petra.ct':             { role:'pastor',        name:'Pastor' },
+  // Team members — individual accounts
+  'team@petra.ct':               { role:'team-member',   name:'Team Member' },
+  'doyinsola@petra.ct':          { role:'team-member',   name:'Doyinsola' },
+  'mobisola@petra.ct':           { role:'team-member',   name:'Mobisola' },
+  'nyen@petra.ct':               { role:'team-member',   name:'Nyen' },
+  'fike@petra.ct':               { role:'team-member',   name:'Fike' },
+  'solape@petra.ct':             { role:'team-member',   name:'Solape' },
+  'jumoke@petra.ct':             { role:'team-member',   name:'Jumoke' },
+  'mercy@petra.ct':              { role:'team-member',   name:'Mercy' },
+  'cynthia@petra.ct':            { role:'team-member',   name:'Cynthia' },
+  'precious@petra.ct':           { role:'team-member',   name:'Precious' },
+  'nosa@petra.ct':               { role:'team-member',   name:'Nosa' },
+  'preye@petra.ct':              { role:'team-member',   name:'Preye' },
+};
+
+// Shorthand usernames (so team members can type "doyinsola" instead of full email)
+const CT_SHORTCUTS = {
+  'admin':'admin@petra.ct', 'connecthead':'connecthead@petra.ct',
+  'pastor':'pastor@petra.ct', 'team':'team@petra.ct',
+  'doyinsola':'doyinsola@petra.ct', 'mobisola':'mobisola@petra.ct',
+  'nyen':'nyen@petra.ct', 'fike':'fike@petra.ct',
+  'solape':'solape@petra.ct', 'jumoke':'jumoke@petra.ct',
+  'mercy':'mercy@petra.ct', 'cynthia':'cynthia@petra.ct',
+  'precious':'precious@petra.ct', 'nosa':'nosa@petra.ct',
+  'preye':'preye@petra.ct'
+};
+
+// Listen for auth state changes
+if (!fbAuth) {
+  // Firebase unavailable — show login, will retry when deployed
+  document.addEventListener('DOMContentLoaded', () => showLoginPage());
+} else {
+fbAuth.onAuthStateChanged(user => {
+  if (user) {
+    const mapping = CT_ROLE_MAP[user.email] || { role:'team-member', name: user.email.split('@')[0] };
+    currentUser = mapping.name;
+    currentRole = mapping.role;
+    // Update role badge in topbar
+    const badge = document.getElementById('roleBadge');
+    if (badge) {
+      const labels = { admin:'Admin', 'connect-head':'Connect Head', 'team-member': mapping.name, pastor:'Pastor' };
+      const cls = { admin:'role-admin', 'connect-head':'role-connect-head', 'team-member':'role-team-member', pastor:'role-pastor' };
+      badge.textContent = mapping.role==='team-member' ? mapping.name : (labels[mapping.role]||mapping.name);
+      badge.className = 'role-badge ' + (cls[mapping.role]||'role-team-member');
+      badge.style.display = 'inline-flex';
+    }
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('loginError').style.display = 'none';
+    applyRoleRestrictions();
+    loadDataFromFirebase();
+  } else {
+    showLoginPage();
   }
-  document.getElementById('loginError').style.display='none';
-  currentUser = user.name;
-  currentRole = user.role;
-  sessionStorage.setItem('ct_auth', JSON.stringify({name:user.name,role:user.role}));
-  localStorage.setItem('ct_v4_user', user.name);
-  localStorage.setItem('ct_v4_role', user.role);
-  document.getElementById('loginPage').classList.add('hidden');
-  applyRoleRestrictions();
-  addAudit('S','Signed in',`${user.name} signed in as ${user.role}`);
-  refreshAll();
-}
-function logout() {
-  sessionStorage.removeItem('ct_auth');
+});
+
+function showLoginPage() {
   document.getElementById('loginPage').classList.remove('hidden');
-  currentUser=''; currentRole='';
+}
+
+} // end firebase available check
+
+async function doLogin() {
+  const email = document.getElementById('loginUsername').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const btn   = document.querySelector('.login-btn');
+  // Accept shorthand (doyinsola → doyinsola@petra.ct) or full email
+  const resolvedEmail = CT_SHORTCUTS[email.toLowerCase()] || email;
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+  try {
+    if (!fbAuth) throw new Error('Firebase not available');
+    await fbAuth.signInWithEmailAndPassword(resolvedEmail, pass);
+    // onAuthStateChanged handles the rest
+  } catch(err) {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPassword').value = '';
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+  }
+}
+
+async function logout() {
+  if (fbAuth) await fbAuth.signOut();
+  currentUser = ''; currentRole = '';
   document.querySelectorAll('.nav-item').forEach(btn=>btn.style.display='');
-  const badge=document.getElementById('roleBadge'); if(badge) badge.style.display='none';
+  const badge = document.getElementById('roleBadge'); if(badge) badge.style.display='none';
 }
 
 
@@ -1715,10 +1871,80 @@ function migrateSecondTimers() {
     return v;
   });
   if (updated > 0) {
-    localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+    fbSave('visitors', visitors);
     console.log(`Migration: promoted ${updated} first timers to second timers`);
   }
   localStorage.setItem(migrationKey, '1');
+}
+
+
+// ── FIREBASE HELPERS ──
+function fbSave(key, data) {
+  if (!fbReady || !fbDb) return;
+  fbDb.ref('connecttrack/' + key).set(data).catch(e => console.warn('Firebase write error:', e));
+}
+
+function loadDataFromFirebase() {
+  if (!fbDb) { seed(); migrateSecondTimers(); fbReady=true; init(); return; }
+  const ref = fbDb.ref('connecttrack');
+  ref.once('value').then(snap => {
+    const d = snap.val() || {};
+    visitors    = d.visitors    || [];
+    teamMembers = d.teamMembers || [];
+    contactLogs = d.contactLogs || [];
+    auditLog    = d.auditLog    || [];
+    tasks       = d.tasks       || [];
+    nudges      = d.nudges      || [];
+    attendance  = d.attendance  || [];
+
+    // Seed if empty
+    if (!visitors.length || !teamMembers.length) {
+      seed();
+    }
+
+    // Run migration
+    migrateSecondTimers();
+
+    fbReady = true;
+
+    // Set up real-time listeners for live sync
+    setupRealtimeListeners();
+
+    init();
+  }).catch(e => {
+    console.error('Firebase load error:', e);
+    // Fallback: run with empty data
+    fbReady = true;
+    seed();
+    init();
+  });
+}
+
+function setupRealtimeListeners() {
+  if (!fbDb) return;
+  fbDb.ref('connecttrack/visitors').on('value', snap => {
+    const v = snap.val();
+    if (v && fbReady) {
+      visitors = v;
+      refreshAll();
+    }
+  });
+  fbDb.ref('connecttrack/contactLogs').on('value', snap => {
+    const v = snap.val();
+    if (v && fbReady) { contactLogs = v; refreshAll(); }
+  });
+  fbDb.ref('connecttrack/tasks').on('value', snap => {
+    const v = snap.val();
+    if (v && fbReady) { tasks = v; renderFollowupsPage(); renderDueTodayWidget(); }
+  });
+  fbDb.ref('connecttrack/teamMembers').on('value', snap => {
+    const v = snap.val();
+    if (v && fbReady) { teamMembers = v; renderTeamPage(); }
+  });
+  fbDb.ref('connecttrack/auditLog').on('value', snap => {
+    const v = snap.val();
+    if (v && fbReady) { auditLog = v; }
+  });
 }
 
 // ── INIT ──
@@ -1728,7 +1954,6 @@ function init() {
   const short = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   document.getElementById('topDate').textContent = full;
   document.getElementById('sidebarDate').textContent = short;
-  checkLogin();
   currentCampus = 'lekki'; // Fixed to Lekki campus
   refreshAll();
 }
@@ -1739,8 +1964,8 @@ function saveUsername() {
   if (!val) return;
   currentUser = val;
   currentRole = role;
-  localStorage.setItem('ct_v4_user', val);
-  localStorage.setItem('ct_v4_role', role);
+  // user stored in Firebase Auth
+  // role stored via CT_ROLE_MAP
   document.getElementById('usernameOverlay').classList.remove('open');
   applyRoleRestrictions();
   addAudit('S','Signed in',`${val} signed into ConnectTrack as ${role}`);
@@ -2405,7 +2630,7 @@ function addTeamMember(e) {
   const d = new FormData(e.target);
   const m = { id:Date.now(), name:d.get('tmName').trim(), role:d.get('tmRole').trim(), phone:d.get('tmPhone')?.trim()||'', assign:d.get('tmAssign') };
   teamMembers.unshift(m);
-  localStorage.setItem('ct_v4_team', JSON.stringify(teamMembers));
+  fbSave('teamMembers', teamMembers);
   addAudit('U+','Team Member Added',`${m.name} (${m.role}) added to the team`);
   e.target.reset();
   renderTeamList();
@@ -2419,7 +2644,7 @@ function deleteTeamMember(id) {
   if (!confirm('Remove this team member?')) return;
   const m = teamMembers.find(x=>x.id===id);
   teamMembers = teamMembers.filter(m=>m.id!==id);
-  localStorage.setItem('ct_v4_team', JSON.stringify(teamMembers));
+  fbSave('teamMembers', teamMembers);
   if (m) addAudit('U×','Team Member Removed',`${m.name} was removed from the team`);
   renderTeamList();
   refreshAll();
@@ -2564,7 +2789,7 @@ function saveContactLog() {
   const now = new Date();
   const dateShort = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   contactLogs.push({ id:Date.now(), memberId:p.memberId, visitorId:p.visitorId, type:p.type, comment, date:now.toISOString(), dateShort });
-  localStorage.setItem('ct_v4_logs', JSON.stringify(contactLogs));
+  fbSave('contactLogs', contactLogs);
   const vis2 = visitors.find(v=>v.id===p.visitorId);
   const mem2 = teamMembers.find(m=>m.id===p.memberId);
   addAudit(p.type==='call'?'C':'T', p.type==='call'?'Call Logged':'Text Logged', `${mem2?.name||'Team member'} ${p.type==='call'?'called':'texted'} ${vis2?vis2.firstName+' '+vis2.lastName:'a visitor'}${comment?' — "'+comment.slice(0,60)+(comment.length>60?'…':'')+'"':''}`);
@@ -2638,6 +2863,20 @@ function openVisitorModal(id) {
       </div>
       <div style="font-size:11px;color:var(--mid);margin-bottom:10px">Tap a member to assign or unassign them to this visitor</div>
       ${assignedPickerHtml}
+    </div>
+    <div class="vm-log-section">
+      <div class="md-label" style="margin-bottom:10px">Log a Contact</div>
+      <div class="vm-log-actions">
+        <button class="vm-log-btn call-btn" onclick="logContactFromModal(${v.id},'call')">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 1.5h2.5l1 2.5-1.5 1c.7 1.4 1.6 2.3 3 3l1-1.5 2.5 1V11C6.5 11 1 5.5 2 1.5z" fill="currentColor" opacity=".8"/></svg>
+          Log Call
+        </button>
+        <button class="vm-log-btn text-btn" onclick="logContactFromModal(${v.id},'text')">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="8" rx="2" stroke="currentColor" stroke-width="1.3" opacity=".8"/><path d="M4 10l1.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".8"/><path d="M3.5 5.5h6M3.5 7.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".6"/></svg>
+          Log Text / WhatsApp
+        </button>
+      </div>
+      ${buildContactLogHtml(v.id)}
     </div>`;
 
   document.getElementById('vModalBadge').innerHTML =
@@ -2669,6 +2908,29 @@ function closeVisitorModal(e) {
     document.getElementById('visitorModalOverlay').classList.remove('open');
     activeModalId = null;
   }
+}
+
+
+// ── LOG CONTACT FROM VISITOR MODAL ──
+function buildContactLogHtml(visitorId) {
+  const vLogs = contactLogs.filter(l=>l.visitorId===visitorId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if (!vLogs.length) return '<div class="vm-log-entry-empty">No contacts logged yet</div>';
+  return '<div class="vm-log-history">' + vLogs.map(l=>{
+    const m = teamMembers.find(x=>x.id===l.memberId);
+    return '<div class="vm-log-entry">' +
+      '<div class="vm-log-entry-hdr">' +
+        '<span class="vm-log-entry-type ' + l.type + '">' + (l.type==='call'?'Call':'Text') + '</span>' +
+        '<span class="vm-log-entry-who">' + (m?m.name:l.who||'Team') + ' · ' + (l.dateShort||'') + '</span>' +
+      '</div>' +
+      (l.comment ? '<div class="vm-log-entry-comment">"' + l.comment + '"</div>' : '<div class="vm-log-entry-empty">No comment added</div>') +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function logContactFromModal(visitorId, type) {
+  const v = visitors.find(x=>x.id===visitorId);
+  const memberId = v && (v.assignedMemberIds||[]).length ? v.assignedMemberIds[0] : null;
+  logContact(memberId, visitorId, type);
 }
 
 // ── FORM VISIT TYPE TOGGLE ──
@@ -2721,7 +2983,7 @@ function saveVisitor(e) {
     dateRaw: new Date().toISOString()
   };
   visitors.unshift(v);
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   const typeLabel = visitType==='special' ? programType==='openheaven'?'Open Heaven':programType==='eirene'?'Eirene Sisters':'Special Program' : visitType==='first'?'First Timer':'Second Timer';
   addAudit('+','Visitor Registered',`${v.firstName} ${v.lastName} registered as ${typeLabel}${v.serviceDay?' ('+v.serviceDay+')':''}`);
   e.target.reset();
@@ -2739,7 +3001,7 @@ function deleteVisitor(id) {
   if (!confirm('Remove this visitor record?')) return;
   const v = visitors.find(x=>x.id===id);
   visitors = visitors.filter(v=>v.id!==id);
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   if (v) addAudit('×','Visitor Deleted',`${v.firstName} ${v.lastName}'s record was removed`);
   refreshAll();
   showToast('×','Record deleted','Visitor removed');
@@ -2752,7 +3014,7 @@ function promoteToSecond() {
   if (idx>-1) {
     const v = visitors[idx];
     visitors[idx].visitType='second';
-    localStorage.setItem('ct_v4_visitors',JSON.stringify(visitors));
+    fbSave('visitors', visitors);
     addAudit('↑','Visitor Promoted',`${v.firstName} ${v.lastName} promoted to Second Timer`);
     refreshAll(); closeVisitorModal(); showToast('↑','Promoted!','Visitor is now a Second Timer');
   }
@@ -2765,7 +3027,7 @@ function toggleWorker() {
   if (idx === -1) return;
   const v = visitors[idx];
   visitors[idx].isWorker = !v.isWorker;
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   const action = visitors[idx].isWorker ? 'marked as a Worker' : 'removed from Workers';
   addAudit('W', 'Worker Status Updated', `${v.firstName} ${v.lastName} ${action}`);
   refreshAll();
@@ -2791,7 +3053,7 @@ function toggleMemberAssignment(memberId) {
     ids.splice(pos,1);
     addAudit('U×','Assignment Removed',`${m?.name||'Team member'} unassigned from ${v.firstName} ${v.lastName}`);
   }
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   refreshAll();
   // Update chips in-place without closing modal
   document.querySelectorAll('#assignPicker .assign-chip').forEach(chip => {
@@ -3042,8 +3304,8 @@ function confirmImport() {
       }
     }
   });
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
-  localStorage.setItem('ct_v4_logs', JSON.stringify(contactLogs));
+  fbSave('visitors', visitors);
+  fbSave('contactLogs', contactLogs);
   addAudit('↑↑','CSV Import',`${newRows.length} visitor records imported from Google Sheet`);
   closeImportModal();
   refreshAll();
@@ -3081,7 +3343,7 @@ function renderDueTodayWidget() {
 // ── CAMPUS ──
 function setCampus(val) {
   currentCampus = val;
-  localStorage.setItem('ct_v4_campus', val);
+  // campus is fixed to lekki
   refreshAll();
 }
 function campusVisitors() {
@@ -3186,7 +3448,7 @@ function advanceGrowthStage(visitorId) {
   const stage = GT_STAGES.find(s=>s.key===current);
   if (!stage || !stage.next) return;
   visitors[idx].growthTrackStage = stage.next;
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   const v = visitors[idx];
   addAudit('+','Growth Track Advanced', `${v.firstName} ${v.lastName} moved to ${stage.next}`);
   refreshAll();
@@ -3282,7 +3544,7 @@ function saveCheckin() {
     const vid = parseInt(chip.getAttribute('data-vid'));
     attendance.push({ id:Date.now()+Math.random()*999|0, visitorId:vid, date, dateShort, service, campus:currentCampus });
   });
-  localStorage.setItem('ct_v4_attendance', JSON.stringify(attendance));
+  fbSave('attendance', attendance);
   addAudit('+','Attendance Logged',`${selected.length} attendees logged for ${dateShort} (${service})`);
   closeCheckinModal();
   refreshAll();
@@ -3396,7 +3658,7 @@ function toggleVisitorAssignment(memberId, visitorId, chipEl) {
     addAudit('U×','Assignment Removed',`${m?.name||'Team member'} unassigned from ${v.firstName} ${v.lastName}`);
     chipEl.classList.remove('assigned');
   }
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
+  fbSave('visitors', visitors);
   renderTeamPage();
 }
 
@@ -3459,7 +3721,7 @@ function saveTask() {
     createdBy:currentUser, createdAt:new Date().toISOString(),
     dueShort: new Date(due+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) };
   tasks.push(task);
-  localStorage.setItem('ct_v4_tasks', JSON.stringify(tasks));
+  fbSave('tasks', tasks);
   addAudit('+','Follow-up Scheduled',`Follow-up with ${v?.firstName} ${v?.lastName} due ${task.dueShort}${m?' — assigned to '+m.name:''}`);
   closeAddTaskModal();
   renderFollowupsPage();
@@ -3469,7 +3731,7 @@ function toggleTask(id) {
   const idx = tasks.findIndex(t=>t.id===id);
   if (idx===-1) return;
   tasks[idx].done = !tasks[idx].done;
-  localStorage.setItem('ct_v4_tasks', JSON.stringify(tasks));
+  fbSave('tasks', tasks);
   const v = visitors.find(x=>x.id===tasks[idx].visitorId);
   if (tasks[idx].done) addAudit('+','Follow-up Completed',`Follow-up with ${v?.firstName||''} ${v?.lastName||''} marked done`);
   renderFollowupsPage();
@@ -3477,7 +3739,7 @@ function toggleTask(id) {
 }
 function deleteTask(id) {
   tasks = tasks.filter(t=>t.id!==id);
-  localStorage.setItem('ct_v4_tasks', JSON.stringify(tasks));
+  fbSave('tasks', tasks);
   renderFollowupsPage();
   renderDueTodayWidget();
 }
@@ -3569,13 +3831,13 @@ function checkNudges() {
   nudges.forEach(n=>{ existingMap[n.id]=n; });
   generated.forEach(n => { if (!existingMap[n.id]) nudges.unshift({...n}); });
   nudges = nudges.filter(n=>generated.some(g=>g.id===n.id));
-  localStorage.setItem('ct_v4_nudges', JSON.stringify(nudges));
+  fbSave('nudges', nudges);
   const unread = nudges.filter(n=>!n.read).length;
   ['nudgeDot','nudgeNavDot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=unread?'block':'none'; });
 }
 function markAllNudgesRead() {
   nudges.forEach(n=>n.read=true);
-  localStorage.setItem('ct_v4_nudges', JSON.stringify(nudges));
+  fbSave('nudges', nudges);
   ['nudgeDot','nudgeNavDot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
   renderNudgesPage();
 }
@@ -3677,11 +3939,162 @@ function clearAdvSearch() {
   runAdvSearch();
 }
 
+
+// ── MONDAY REMINDERS ──
+
+function buildReminderData() {
+  // For each team member, find visitors assigned to them who have no contact log
+  const contactedIds = new Set(contactLogs.map(l=>l.visitorId));
+  return teamMembers.map(m => {
+    const assigned = getAssignedVisitors(m);
+    const uncontacted = assigned.filter(v => !contactedIds.has(v.id));
+    return { m, assigned: assigned.length, uncontacted };
+  }).filter(r => r.uncontacted.length > 0);
+}
+
+function buildWhatsAppMessage(m, uncontacted) {
+  const names = uncontacted.slice(0, 10).map((v,i) =>
+    `${i+1}. ${v.firstName} ${v.lastName} — ${v.phone}`
+  ).join('\n');
+  const extra = uncontacted.length > 10 ? `\n...and ${uncontacted.length - 10} more.` : '';
+  return `Hi ${m.name}, hope you're well! 😊\n\nThis is a reminder that you have *${uncontacted.length} visitor${uncontacted.length>1?'s':''} who haven't been contacted yet*:\n\n${names}${extra}\n\nPlease reach out to them before Monday 5pm. Thank you and God bless! 🙏\n\n— ConnectTrack, Petra Christian Centre`;
+}
+
+function buildEmailBody(m, uncontacted) {
+  const rows = uncontacted.slice(0,20).map((v,i) =>
+    `${i+1}. ${v.firstName} ${v.lastName} | ${v.phone} | ${v.visitType==='first'?'First Timer':'Second Timer'} | ${v.serviceDay==='sunday'?'Sunday':'Wednesday'}`
+  ).join('\n');
+  const extra = uncontacted.length > 20 ? `\n...and ${uncontacted.length - 20} more.` : '';
+  return `Hi ${m.name},\n\nThis is your weekly ConnectTrack reminder from Petra Christian Centre Connect Team.\n\nYou have ${uncontacted.length} visitor${uncontacted.length>1?'s':''} who have not been contacted yet:\n\n${rows}${extra}\n\nPlease reach out to all of them before Monday 5:00pm.\n\nThank you for your service!\n\nGod bless,\nPetra Connect Team`;
+}
+
+function saveEmailJSConfig() {
+  const sid = document.getElementById('ejsServiceId').value.trim();
+  const tid = document.getElementById('ejsTemplateId').value.trim();
+  const pk  = document.getElementById('ejsPublicKey').value.trim();
+  if (!sid || !tid || !pk) { showToast('!','Missing fields','Please fill all EmailJS fields'); return; }
+  localStorage.setItem('ct_ejs_service', sid);
+  localStorage.setItem('ct_ejs_template', tid);
+  localStorage.setItem('ct_ejs_pubkey', pk);
+  if (typeof emailjs !== 'undefined') emailjs.init(pk);
+  document.getElementById('emailjsSetupNotice').style.display = 'none';
+  showToast('✓','Email config saved','Ready to send emails');
+  renderReminderList();
+}
+
+function openReminderModal() {
+  // Pre-fill saved config
+  const sid = localStorage.getItem('ct_ejs_service')||'';
+  const tid = localStorage.getItem('ct_ejs_template')||'';
+  const pk  = localStorage.getItem('ct_ejs_pubkey')||'';
+  if (sid) document.getElementById('ejsServiceId').value = sid;
+  if (tid) document.getElementById('ejsTemplateId').value = tid;
+  if (pk)  document.getElementById('ejsPublicKey').value = pk;
+  // Hide setup if already configured
+  const configured = sid && tid && pk;
+  document.getElementById('emailjsSetupNotice').style.display = configured ? 'none' : 'block';
+  if (configured && typeof emailjs !== 'undefined') emailjs.init(pk);
+  renderReminderList();
+  document.getElementById('reminderModalOverlay').classList.add('open');
+}
+
+function closeReminderModal(e) {
+  if (!e || e.target===document.getElementById('reminderModalOverlay'))
+    document.getElementById('reminderModalOverlay').classList.remove('open');
+}
+
+function renderReminderList() {
+  const el = document.getElementById('reminderMemberList');
+  const data = buildReminderData();
+  const emailConfigured = !!(localStorage.getItem('ct_ejs_service') && localStorage.getItem('ct_ejs_pubkey'));
+
+  if (!data.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;font-size:13px;color:var(--success);font-weight:600">All visitors have been contacted! No reminders needed.</div>';
+    return;
+  }
+
+  el.innerHTML = data.map(({m, assigned, uncontacted}) => {
+    const col = avColor(m.name);
+    const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const phone = m.phone ? m.phone.replace(/[^\d+]/g,'') : '';
+    const waMsg = encodeURIComponent(buildWhatsAppMessage(m, uncontacted));
+    const waUrl = phone ? `https://wa.me/${phone.replace('+','')}?text=${waMsg}` : '';
+    return `<div class="reminder-member-row">
+      <div class="reminder-member-av" style="background:${col}22;color:${col}">${ini}</div>
+      <div class="reminder-member-info">
+        <div class="reminder-member-name">${m.name}</div>
+        <div class="reminder-member-count">${uncontacted.length} uncontacted of ${assigned} assigned visitors</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${waUrl
+          ? `<a href="${waUrl}" target="_blank" class="reminder-wa-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.531 5.846L0 24l6.335-1.508A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.587-.5-5.088-1.375l-.365-.217-3.763.896.945-3.653-.236-.374A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              WA
+            </a>`
+          : `<span style="font-size:10px;color:var(--mid);font-style:italic">No phone</span>`}
+        <button class="reminder-email-btn" ${!emailConfigured?'disabled title="Configure EmailJS above first"':''} onclick="sendOneEmail(${m.id})">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 4l6 4 6-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Email
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function sendOneEmail(memberId) {
+  const sid = localStorage.getItem('ct_ejs_service');
+  const tid = localStorage.getItem('ct_ejs_template');
+  if (!sid || !tid) { showToast('!','Not configured','Save your EmailJS config first'); return; }
+  const m = teamMembers.find(x=>x.id===memberId);
+  if (!m || !m.phone) { showToast('!','No email','No email on record for this team member'); return; }
+  const contactedIds = new Set(contactLogs.map(l=>l.visitorId));
+  const uncontacted = getAssignedVisitors(m).filter(v=>!contactedIds.has(v.id));
+  if (!uncontacted.length) { showToast('✓','Already done',`${m.name} has no uncontacted visitors`); return; }
+  try {
+    await emailjs.send(sid, tid, {
+      to_name: m.name,
+      to_email: m.email || '',
+      message: buildEmailBody(m, uncontacted),
+      uncontacted_count: uncontacted.length,
+      church: 'Petra Christian Centre'
+    });
+    showToast('✓','Email sent',`Reminder sent to ${m.name}`);
+  } catch(err) {
+    showToast('!','Email failed', err.text || 'Check your EmailJS config');
+  }
+}
+
+function sendAllWhatsApp() {
+  const data = buildReminderData();
+  let opened = 0;
+  data.forEach(({m, uncontacted}) => {
+    const phone = m.phone ? m.phone.replace(/[^\d+]/g,'').replace('+','') : '';
+    if (!phone) return;
+    const waMsg = encodeURIComponent(buildWhatsAppMessage(m, uncontacted));
+    window.open(`https://wa.me/${phone}?text=${waMsg}`, '_blank');
+    opened++;
+  });
+  if (!opened) showToast('!','No phones','Add phone numbers to team members first');
+  else showToast('✓',`${opened} WhatsApp windows opened`,'Review and send each message');
+}
+
+async function sendAllEmails() {
+  const data = buildReminderData();
+  let sent = 0, failed = 0;
+  for (const {m, uncontacted} of data) {
+    try {
+      await sendOneEmail(m.id);
+      sent++;
+    } catch(e) { failed++; }
+  }
+  showToast(failed?'!':'✓',`${sent} emails sent${failed?' ('+failed+' failed)':''}`,'');
+}
+
 function addAudit(icon, action, detail) {
   const now = new Date();
   auditLog.unshift({ id:Date.now(), icon, action, detail, who: currentUser||'System', time: now.toISOString(), timeShort: now.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) });
   if (auditLog.length > 500) auditLog = auditLog.slice(0,500);
-  localStorage.setItem('ct_v4_audit', JSON.stringify(auditLog));
+  fbSave('auditLog', auditLog);
 }
 
 function renderAuditPage() {
@@ -5617,14 +6030,12 @@ contactLogs = [
   {id:9565,visitorId:6121,type:"call",comment:"Text sent",date:"2025-03-01T09:00:00.000Z",dateShort:"Mar 1, 2025",who:"Doyinsola",memberId:2001},
   {id:9566,visitorId:6122,type:"call",comment:"Text sent",date:"2025-03-01T09:00:00.000Z",dateShort:"Mar 1, 2025",who:"Doyinsola",memberId:2001}
 ];
-  localStorage.setItem('ct_v4_visitors', JSON.stringify(visitors));
-  localStorage.setItem('ct_v4_team', JSON.stringify(teamMembers));
-  localStorage.setItem('ct_v4_logs', JSON.stringify(contactLogs));
+  fbSave('visitors', visitors);
+  fbSave('teamMembers', teamMembers);
+  fbSave('contactLogs', contactLogs);
 }
 
-seed();
-migrateSecondTimers();
-init();
+// Firebase auth state change triggers loadDataFromFirebase() → seed() → init()
 </script>
 </body>
 </html>
