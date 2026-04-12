@@ -3064,9 +3064,9 @@ function closeMemberModal(e) {
 }
 
 function logContact(memberId, visitorId, type) {
-  const m = teamMembers.find(x=>x.id===memberId);
+  const m = memberId ? teamMembers.find(x=>x.id===memberId) : null;
   const v = visitors.find(x=>x.id===visitorId);
-  if (!m || !v) return;
+  if (!v) return;
 
   // Store pending log context
   window._pendingLog = { memberId, visitorId, type };
@@ -3078,7 +3078,7 @@ function logContact(memberId, visitorId, type) {
   document.getElementById('logDialogIcon').style.cssText = `background:${bg};color:${col}`;
   document.getElementById('logDialogIcon').innerHTML = isCall ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 2.5h3.5l1.5 3.5-2 1.5c.9 1.8 2 3 3.8 3.8l1.5-2 3.5 1.5v3.5C9.5 16 2 8.5 3 2.5z" fill="currentColor" opacity=".8"/></svg>' : '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 3h14a1 1 0 011 1v8a1 1 0 01-1 1H5l-4 3V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
   document.getElementById('logDialogTitle').textContent = isCall ? 'Log a Call' : 'Log a Text';
-  document.getElementById('logDialogSub').textContent = `Recording contact by ${m.name}`;
+  document.getElementById('logDialogSub').textContent = m ? `Recording contact by ${m.name}` : `Logged by ${currentUser||'Team'}`;
   document.getElementById('logDialogSaveBtn').textContent = isCall ? 'Save Call Log' : 'Save Text Log';
   document.getElementById('logDialogComment').value = '';
 
