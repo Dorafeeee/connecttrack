@@ -2315,19 +2315,55 @@ function renderDashboard() {
     const sixMs = 6*30*24*60*60*1000;
     const secondPhones = new Set(second.map(v=>v.phone.replace(/\s/g,'')));
     const atRiskCount = first.filter(v=>{ const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date); return d&&(now-d)>=sixMs&&!secondPhones.has(v.phone.replace(/\s/g,'')); }).length;
-    const kpis = [
-      {cls:'kpi-total',  label:'Total Visitors',  value:total,           sub:tmCount>0?`+${tmCount} this month`:'All time',   color:'var(--gold-mid)'},
-      {cls:'kpi-first',  label:'First Timers',    value:first.length,   sub:`${Math.round(first.length/Math.max(total,1)*100)}% of all visitors`,   color:'var(--first)'},
-      {cls:'kpi-second', label:'Second Timers',   value:second.length,  sub:`${returnRate}% return rate`,                                            color:'var(--second)'},
-      {cls:'kpi-return', label:'Contacted',       value:contacted,       sub:`${Math.round(contacted/Math.max(total,1)*100)}% follow-up rate`,        color:'#F97316'},
-      {cls:'kpi-workers',label:'Workers',         value:workers.length, sub:`${atRiskCount} at risk · ${workers.length} serving`,                    color:'var(--success)'},
-    ];
-    kpiEl.innerHTML = kpis.map(k=>`
-      <div class="kpi-card ${k.cls}">
-        <div class="kpi-label">${k.label}</div>
-        <div class="kpi-value" style="color:${k.color}">${k.value.toLocaleString()}</div>
-        <div class="kpi-sub">${k.sub}</div>
-      </div>`).join('');
+    const sunFirst  = data.filter(v=>v.visitType==='first'  && v.serviceDay==='sunday').length;
+    const wedFirst  = data.filter(v=>v.visitType==='first'  && v.serviceDay==='wednesday').length;
+    const sunSecond = data.filter(v=>v.visitType==='second' && v.serviceDay==='sunday').length;
+    const wedSecond = data.filter(v=>v.visitType==='second' && v.serviceDay==='wednesday').length;
+
+    kpiEl.innerHTML = `
+      <div class="kpi-card kpi-total">
+        <div class="kpi-label">Total Visitors</div>
+        <div class="kpi-value" style="color:var(--gold-mid)">${total.toLocaleString()}</div>
+        <div class="kpi-sub">${tmCount>0?`+${tmCount} this month`:'All time'}</div>
+      </div>
+      <div class="kpi-card kpi-first">
+        <div class="kpi-label">First Timers</div>
+        <div class="kpi-value" style="color:var(--first)">${first.length.toLocaleString()}</div>
+        <div class="kpi-sub" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span style="display:inline-flex;align-items:center;gap:3px">
+            <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(212,160,23,.12);color:var(--gold-dark)">Sun</span>
+            <span style="font-weight:700;color:var(--deep)">${sunFirst}</span>
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:3px">
+            <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(109,40,217,.1);color:#6D28D9">Wed</span>
+            <span style="font-weight:700;color:var(--deep)">${wedFirst}</span>
+          </span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-second">
+        <div class="kpi-label">Second Timers</div>
+        <div class="kpi-value" style="color:var(--second)">${second.length.toLocaleString()}</div>
+        <div class="kpi-sub" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span style="display:inline-flex;align-items:center;gap:3px">
+            <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(212,160,23,.12);color:var(--gold-dark)">Sun</span>
+            <span style="font-weight:700;color:var(--deep)">${sunSecond}</span>
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:3px">
+            <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(109,40,217,.1);color:#6D28D9">Wed</span>
+            <span style="font-weight:700;color:var(--deep)">${wedSecond}</span>
+          </span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-return">
+        <div class="kpi-label">Contacted</div>
+        <div class="kpi-value" style="color:#F97316">${contacted.toLocaleString()}</div>
+        <div class="kpi-sub">${Math.round(contacted/Math.max(total,1)*100)}% follow-up rate</div>
+      </div>
+      <div class="kpi-card kpi-workers">
+        <div class="kpi-label">Workers</div>
+        <div class="kpi-value" style="color:var(--success)">${workers.length.toLocaleString()}</div>
+        <div class="kpi-sub">${atRiskCount} at risk · ${workers.length} serving</div>
+      </div>`;
   }
 
   // ── DONUT ──
@@ -3897,46 +3933,74 @@ function checkNudges() {
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
   const generated = [];
-  tasks.filter(t=>!t.done && t.due < todayStr).forEach(t => {
+
+  // 1. Overdue follow-up tasks (actionable, forward-looking)
+  tasks.filter(t=>!t.done && t.due <= todayStr).forEach(t => {
     const v = visitors.find(x=>x.id===t.visitorId);
-    generated.push({ id:'task-'+t.id, type:'overdue', icon:'+', bg:'#FEF2F2',
-      title:'Overdue follow-up', detail:`${v?v.firstName+' '+v.lastName:'A visitor'} was due ${t.dueShort}`, time:t.due, read:false });
+    generated.push({ id:'task-'+t.id, type:'overdue', icon:'!', bg:'#FEF2F2',
+      title:'Overdue follow-up', detail:`${v?v.firstName+' '+v.lastName:'A visitor'} — due ${t.dueShort||t.due}`,
+      time: now.toISOString(), read:false });
   });
+
+  // 2. Uncontacted first timers from the LAST 14 DAYS only (recent & actionable)
+  const contactedIds = new Set(contactLogs.map(l=>l.visitorId));
   visitors.filter(v=>v.visitType==='first').forEach(v => {
-    const vLogs = contactLogs.filter(l=>l.visitorId===v.id);
     const regDate = v.dateRaw ? new Date(v.dateRaw) : parseDateStr(v.date);
     if (!regDate) return;
-    const daysSince = Math.floor((now-regDate)/86400000);
-    if (daysSince>=7 && !vLogs.length) {
+    const daysSince = Math.floor((now - regDate) / 86400000);
+    if (daysSince >= 1 && daysSince <= 14 && !contactedIds.has(v.id)) {
       generated.push({ id:'uncontacted-'+v.id, type:'uncontacted', icon:'!', bg:'#FFF7ED',
-        title:'First timer not contacted', detail:`${v.firstName} ${v.lastName} registered ${daysSince} days ago — no contact logged`, time:v.dateRaw||v.date, read:false });
+        title:'New first timer — not yet contacted',
+        detail:`${v.firstName} ${v.lastName} (${v.serviceDay==='sunday'?'Sunday':'Wednesday'}) — ${daysSince} day${daysSince===1?'':'s'} ago`,
+        time: regDate.toISOString(), read:false });
     }
   });
-  const sixMs = 6*30*24*60*60*1000;
-  const secondPhones = new Set(visitors.filter(v=>v.visitType==='second').map(v=>v.phone.replace(/\s/g,'')));
-  visitors.filter(v=>v.visitType==='first').forEach(v => {
-    const d = v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date);
-    if (!d) return;
-    if ((now-d)>=sixMs && !secondPhones.has(v.phone.replace(/\s/g,''))) {
-      generated.push({ id:'atrisk-'+v.id, type:'atrisk', icon:'!', bg:'#FEF2F2',
-        title:'At-risk visitor', detail:`${v.firstName} ${v.lastName} hasn't returned in ${Math.floor((now-d)/(30*24*60*60*1000))} months`, time:v.dateRaw||v.date, read:false });
-    }
-  });
+
+  // 3. Upcoming birthdays within 7 days
   visitors.forEach(v => {
     if (!v.dob) return;
     const parsed = parseDOBMonth(v.dob);
     if (!parsed) return;
     const thisYear = new Date(now.getFullYear(), parsed.month, parsed.day);
-    const days = Math.round((thisYear-now)/86400000);
-    if (days>=0 && days<=7) {
+    const days = Math.round((thisYear - now) / 86400000);
+    if (days >= 0 && days <= 7) {
       generated.push({ id:'bday-'+v.id, type:'birthday', icon:'B', bg:'#FFF9F0',
-        title:`Birthday${days===0?' today':' in '+days+' days'}`, detail:`${v.firstName} ${v.lastName} — ${v.dob}`, time:new Date().toISOString(), read:false });
+        title: days === 0 ? 'Birthday today!' : `Birthday in ${days} day${days===1?'':'s'}`,
+        detail:`${v.firstName} ${v.lastName} — ${v.dob}`,
+        time: thisYear.toISOString(), read:false });
     }
   });
+
+  // 4. Sunday call reminder — nudge every Sunday at/after 9am
+  const dayOfWeek = now.getDay(); // 0=Sun, 3=Wed
+  const hour = now.getHours();
+  const sunNudgeId = 'sun-call-reminder-' + now.toISOString().slice(0,10);
+  const wedNudgeId = 'wed-call-reminder-' + now.toISOString().slice(0,10);
+  if (dayOfWeek === 0 && hour >= 9) {
+    const uncontacted = visitors.filter(v=>v.visitType==='first' && !contactedIds.has(v.id) && v.serviceDay==='sunday');
+    if (uncontacted.length) {
+      generated.push({ id: sunNudgeId, type:'reminder', icon:'S', bg:'rgba(212,160,23,.1)',
+        title:'Sunday call reminder',
+        detail:`${uncontacted.length} Sunday first timer${uncontacted.length===1?'':' s'} haven't been contacted. Please call before 5pm today.`,
+        time: now.toISOString(), read:false });
+    }
+  }
+  if (dayOfWeek === 3 && hour >= 9) {
+    const uncontacted = visitors.filter(v=>v.visitType==='first' && !contactedIds.has(v.id) && v.serviceDay==='wednesday');
+    if (uncontacted.length) {
+      generated.push({ id: wedNudgeId, type:'reminder', icon:'W', bg:'rgba(109,40,217,.08)',
+        title:'Wednesday call reminder',
+        detail:`${uncontacted.length} Wednesday first timer${uncontacted.length===1?'':' s'} haven't been contacted. Please call before 5pm today.`,
+        time: now.toISOString(), read:false });
+    }
+  }
+
+  // Merge with existing (preserve read state), remove stale, sort newest first
   const existingMap = {};
   nudges.forEach(n=>{ existingMap[n.id]=n; });
-  generated.forEach(n => { if (!existingMap[n.id]) nudges.unshift({...n}); });
-  nudges = nudges.filter(n=>generated.some(g=>g.id===n.id));
+  generated.forEach(n => { if (existingMap[n.id]) n.read = existingMap[n.id].read; });
+  nudges = generated.sort((a,b)=>new Date(b.time)-new Date(a.time));
+
   fbSave('nudges', nudges);
   const unread = nudges.filter(n=>!n.read).length;
   ['nudgeDot','nudgeNavDot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=unread?'block':'none'; });
@@ -4242,7 +4306,9 @@ function renderTeamPage() {
       const col = avColor(m.name);
       const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
       const assigned = getAssignedVisitors(m);
-      const logs = contactLogs.filter(l=>l.memberId===m.id);
+      // Only count calls/texts made to visitors assigned to this member
+      const assignedIds = new Set(assigned.map(v=>v.id));
+      const logs = contactLogs.filter(l=>l.memberId===m.id && assignedIds.has(l.visitorId));
       const calls = logs.filter(l=>l.type==='call').length;
       const texts = logs.filter(l=>l.type==='text').length;
       const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both';
