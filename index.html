@@ -2002,13 +2002,21 @@ function loadDataFromFirebase() {
   const ref = fbDb.ref('connecttrack');
   ref.once('value').then(snap => {
     const d = snap.val() || {};
-    visitors    = d.visitors    || [];
-    teamMembers = d.teamMembers || [];
-    contactLogs = d.contactLogs || [];
-    auditLog    = d.auditLog    || [];
-    tasks       = d.tasks       || [];
-    nudges      = d.nudges      || [];
-    attendance  = d.attendance  || [];
+    // Helper: Firebase PATCH stores arrays as objects {"0":{...},"1":{...}} — convert back
+    function toArr(val) {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(Boolean);
+      // Object with numeric keys → array
+      return Object.keys(val).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>val[k]).filter(Boolean);
+    }
+
+    visitors    = toArr(d.visitors);
+    teamMembers = toArr(d.teamMembers);
+    contactLogs = toArr(d.contactLogs);
+    auditLog    = toArr(d.auditLog);
+    tasks       = toArr(d.tasks);
+    nudges      = toArr(d.nudges);
+    attendance  = toArr(d.attendance);
 
     // Seed if empty
     if (!visitors.length || !teamMembers.length) {
@@ -2038,25 +2046,36 @@ function setupRealtimeListeners() {
   fbDb.ref('connecttrack/visitors').on('value', snap => {
     const v = snap.val();
     if (v && fbReady) {
-      visitors = v;
+      visitors = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
       refreshAll();
     }
   });
   fbDb.ref('connecttrack/contactLogs').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) { contactLogs = v; refreshAll(); }
+    if (v && fbReady) {
+      contactLogs = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
+      refreshAll();
+    }
   });
   fbDb.ref('connecttrack/tasks').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) { tasks = v; renderFollowupsPage(); renderDueTodayWidget(); }
+    if (v && fbReady) {
+      tasks = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
+      renderFollowupsPage(); renderDueTodayWidget();
+    }
   });
   fbDb.ref('connecttrack/teamMembers').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) { teamMembers = v; renderTeamPage(); }
+    if (v && fbReady) {
+      teamMembers = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
+      renderTeamPage();
+    }
   });
   fbDb.ref('connecttrack/auditLog').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) { auditLog = v; }
+    if (v && fbReady) {
+      auditLog = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
+    }
   });
 }
 
