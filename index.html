@@ -2658,9 +2658,9 @@ function renderDashboard() {
       return null;
     }
 
-    // Helper: get stats for a given date string
-    function getServiceStats(dateStr) {
-      const vs = visitors.filter(v => visitorLocalDate(v) === dateStr);
+    // Helper: get stats for a given date string AND service day
+    function getServiceStats(dateStr, svcDay) {
+      const vs = visitors.filter(v => visitorLocalDate(v) === dateStr && v.serviceDay === svcDay);
       return {
         first:     vs.filter(v=>v.visitType==='first').length,
         second:    vs.filter(v=>v.visitType==='second').length,
@@ -2693,11 +2693,11 @@ function renderDashboard() {
       if (!latestDate) return `<div style="padding:16px 18px;font-size:12px;color:var(--muted);font-style:italic">No ${serviceLabel} data yet</div>`;
 
       const isToday = latestDate === todayStr;
-      const stats = getServiceStats(latestDate);
+      const stats = getServiceStats(latestDate, svcDay);
 
       // Previous service date for comparison
       const prevDate  = latestServiceDate(svcDay, latestDate);
-      const prevStats = prevDate ? getServiceStats(prevDate) : null;
+      const prevStats = prevDate ? getServiceStats(prevDate, svcDay) : null;
       const prevLabel = prevDate ? new Date(prevDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
       // Format latest date properly
       const latestDateFmt = new Date(latestDate+'T12:00:00');
