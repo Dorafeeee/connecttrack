@@ -1067,6 +1067,9 @@ textarea{resize:vertical;min-height:80px}
     </div>
 
     <!-- Birthday + Due Today -->
+    <!-- Today's Service Stats -->
+    <div class="dc dg-full" id="dashTodayServiceCard" style="margin-bottom:14px"></div>
+
     <div id="dueTodayWidget"></div>
     <div id="birthdayWidget"></div>
 
@@ -1207,6 +1210,11 @@ textarea{resize:vertical;min-height:80px}
       <button class="f-btn" onclick="filterRec('social',this)">Social Media</button>
       <button class="f-btn" id="uncontactedFilterBtn" style="color:#DC2626;border-color:#FECACA" onclick="filterRec('uncontacted',this)">Uncontacted First Timers</button>
       <button class="f-btn" id="atRiskFilterBtn" style="color:#DC2626;border-color:#FECACA" onclick="filterRec('atrisk',this)">At-Risk Visitors</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--mid)">Date</label>
+        <input type="date" id="recDateFilter" class="df-select" style="padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif" onchange="filterRec(currentFilter,null)">
+        <button class="f-btn" id="clearDateBtn" onclick="document.getElementById('recDateFilter').value='';filterRec(currentFilter,null)" style="padding:5px 10px;font-size:11px;display:none">✕ Clear date</button>
+      </div>
       <div style="margin-left:auto">
         <div class="search-box"><span style="display:flex;align-items:center;color:var(--mid)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.5"/><line x1="8.5" y1="8.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><input type="text" id="recSearch" placeholder="Search by name…" oninput="filterRec(currentFilter,null,this.value)"></div>
       </div>
@@ -2626,6 +2634,101 @@ function renderDashboard() {
       </div>`;
   }
 
+
+  // ── TODAY'S SERVICE STATS ──
+  const todaySvcEl = document.getElementById('dashTodayServiceCard');
+  if (todaySvcEl) {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0,10);
+    const isSunday = now.getDay() === 0;
+    const isWednesday = now.getDay() === 3;
+    const isServiceDay = isSunday || isWednesday;
+
+    // Helper: get stats for a given date string
+    function getServiceStats(dateStr) {
+      const vs = visitors.filter(v => {
+        const d = parseDateStr(v.date) || (v.dateRaw ? new Date(v.dateRaw) : null);
+        return d && d.toISOString().slice(0,10) === dateStr;
+      });
+      return {
+        first:     vs.filter(v=>v.visitType==='first').length,
+        second:    vs.filter(v=>v.visitType==='second').length,
+        total:     vs.length,
+        contacted: vs.filter(v=>contactedIds.has(v.id)).length
+      };
+    }
+
+    // Find most recent date for a given service day (at or before today)
+    function latestServiceDate(svcDay, excludeDate) {
+      const dates = [...new Set(visitors
+        .filter(v => v.serviceDay === svcDay)
+        .map(v => { const d = parseDateStr(v.date)||(v.dateRaw?new Date(v.dateRaw):null); return d?d.toISOString().slice(0,10):null; })
+        .filter(d => d && d <= todayStr && d !== excludeDate)
+      )].sort().reverse();
+      return dates[0] || null;
+    }
+
+    function svcDelta(cur, prev, prevLabel) {
+      if (!prev && prev !== 0) return '';
+      const diff = cur - prev;
+      const cls   = diff > 0 ? '#059669' : diff < 0 ? '#DC2626' : 'var(--mid)';
+      const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+      return `<span style="font-size:11px;font-weight:700;color:${cls};margin-left:6px">${arrow}${Math.abs(diff)} vs ${prevLabel}</span>`;
+    }
+
+    function buildServicePanel(svcDay, labelColor, labelBg, serviceLabel) {
+      // Most recent date for this service day
+      const latestDate = latestServiceDate(svcDay, null);
+      if (!latestDate) return `<div style="padding:16px 18px;font-size:12px;color:var(--muted);font-style:italic">No ${serviceLabel} data yet</div>`;
+
+      const isToday = latestDate === todayStr;
+      const stats = getServiceStats(latestDate);
+
+      // Previous service date for comparison
+      const prevDate  = latestServiceDate(svcDay, latestDate);
+      const prevStats = prevDate ? getServiceStats(prevDate) : null;
+      const prevLabel = prevDate ? new Date(prevDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
+      const dateLabel = isToday ? 'Today' : new Date(latestDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+
+      return `<div>
+        <div style="padding:10px 16px 6px;background:${labelBg};display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;font-weight:700;color:${labelColor}">${serviceLabel} · ${dateLabel}</span>
+          <span style="font-size:11px;font-weight:700;color:${labelColor}">${stats.total} total</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+          ${[
+            {label:'First Timers',  val:stats.first,     prev:prevStats?.first,     color:'var(--first)'},
+            {label:'Second Timers', val:stats.second,    prev:prevStats?.second,    color:'var(--second)'},
+            {label:'Total',         val:stats.total,     prev:prevStats?.total,     color:labelColor},
+            {label:'Contacted',     val:stats.contacted, prev:prevStats?.contacted, color:'#F97316'},
+          ].map((s,i)=>`
+            <div style="padding:12px 14px;${i<3?'border-right:1px solid var(--border)':''}">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">${s.label}</div>
+              <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:${s.color};line-height:1">
+                ${s.val}${prevLabel?svcDelta(s.val,s.prev,prevLabel):''}
+              </div>
+              ${prevLabel&&s.prev!=null?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Prev (${prevLabel}): ${s.prev}</div>`:''}
+            </div>`
+          ).join('')}
+        </div>
+      </div>`;
+    }
+
+    const sunPanel = buildServicePanel('sunday',    'var(--gold-mid)', 'rgba(212,160,23,.08)',  'Sunday');
+    const wedPanel = buildServicePanel('wednesday', '#6D28D9',         'rgba(109,40,217,.06)',  'Wednesday');
+
+    todaySvcEl.innerHTML = `
+      <div class="dc-hdr">
+        <div><div class="dc-title">This Week's Services</div>
+          <div class="dc-sub">${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
+        <div style="border-right:1px solid var(--border)">${sunPanel}</div>
+        <div>${wedPanel}</div>
+      </div>`;
+  }
+
   // ── SERVICE DAY SPLIT ──
   const svcEl = document.getElementById('dashServiceSplitCard');
   if (svcEl) {
@@ -2692,6 +2795,17 @@ function renderRecordsTable() {
   if (currentFilter==='family')      data = data.filter(v=>v.source==='family');
   if (currentFilter==='social')      data = data.filter(v=>['instagram','facebook','twitter','youtube'].includes(v.source));
   if (currentFilter==='uncontacted') data = data.filter(v=>v.visitType==='first' && !contactedIds.has(v.id));
+  // Date filter
+  const dateFilterVal = document.getElementById('recDateFilter')?.value || '';
+  const clearDateBtn = document.getElementById('clearDateBtn');
+  if (clearDateBtn) clearDateBtn.style.display = dateFilterVal ? 'inline-flex' : 'none';
+  if (dateFilterVal) {
+    data = data.filter(v => {
+      const d = parseDateStr(v.date) || (v.dateRaw ? new Date(v.dateRaw) : null);
+      if (!d) return false;
+      return d.toISOString().slice(0,10) === dateFilterVal;
+    });
+  }
   if (currentFilter==='atrisk') {
     const now=new Date(), sixMs=6*30*24*60*60*1000;
     const secPhones=new Set(visitors.filter(v=>v.visitType==='second').map(v=>v.phone.replace(/\s/g,'')));
