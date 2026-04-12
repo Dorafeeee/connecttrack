@@ -2969,14 +2969,10 @@ function deleteTeamMember(id) {
 
 // ── MEMBER PROFILE MODAL ──
 function getAssignedVisitors(m) {
-  // Include visitors individually assigned to this member OR assigned by type
-  return sortByDate(visitors.filter(v => {
-    const individuallyAssigned = v.assignedMemberIds && v.assignedMemberIds.includes(m.id);
-    const typeAssigned = m.assign==='first' ? v.visitType==='first'
-                       : m.assign==='second' ? v.visitType==='second'
-                       : true;
-    return individuallyAssigned || typeAssigned;
-  }));
+  // Only return visitors individually assigned to this member via assignedMemberIds
+  return sortByDate(visitors.filter(v =>
+    v.assignedMemberIds && v.assignedMemberIds.includes(m.id)
+  ));
 }
 
 function openMemberModal(id) {
