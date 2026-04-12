@@ -3120,32 +3120,53 @@ function logContact(memberId, visitorId, type) {
 function saveContactLog() {
   const p = window._pendingLog;
   if (!p) return;
+
   const comment = document.getElementById('logDialogComment').value.trim();
   const now = new Date();
   const dateShort = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  contactLogs.push({ id:Date.now(), memberId:p.memberId||null, visitorId:p.visitorId, type:p.type, comment, date:now.toISOString(), dateShort, who:mem2?.name||currentUser||'Team' });
-  fbSave('contactLogs', contactLogs);
-  const vis2 = visitors.find(v=>v.id===p.visitorId);
-  const mem2 = teamMembers.find(m=>m.id===p.memberId);
-  addAudit(p.type==='call'?'C':'T', p.type==='call'?'Call Logged':'Text Logged', `${mem2?.name||'Team member'} ${p.type==='call'?'called':'texted'} ${vis2?vis2.firstName+' '+vis2.lastName:'a visitor'}${comment?' — "'+comment.slice(0,60)+(comment.length>60?'…':'')+'"':''}`);
-  closeLogDialog();
-  const m = teamMembers.find(x=>x.id===p.memberId);
-  if (m) {
-    const col = avColor(m.name);
-    const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const badgeTxt = m.assign==='first'?'First Timers':m.assign==='second'?'Second Timers':'Both Groups';
-    renderMemberModalBody(m, col, ini, badgeTxt);
-  }
-  renderTeamPage();
   const vis = visitors.find(v=>v.id===p.visitorId);
-  showToast(p.type==='call'?'C':'T', p.type==='call'?'Call logged!':'Text logged!', vis?vis.firstName+' '+vis.lastName:'');
+  const mem = teamMembers.find(m=>m.id===p.memberId);
+
+  // Add log entry
+  contactLogs.push({
+    id: Date.now(),
+    memberId: p.memberId||null,
+    visitorId: p.visitorId,
+    type: p.type,
+    comment,
+    date: now.toISOString(),
+    dateShort,
+    who: mem?.name || currentUser || 'Team'
+  });
+
+  // Save to Firebase BEFORE releasing fbPaused
+  fbSave('contactLogs', contactLogs);
+  addAudit(
+    p.type==='call'?'C':'T',
+    p.type==='call'?'Call Logged':'Text Logged',
+    `${mem?.name||currentUser||'Team'} ${p.type==='call'?'called':'texted'} ${vis?vis.firstName+' '+vis.lastName:'a visitor'}${comment?' — "'+comment.slice(0,60)+(comment.length>60?'…':'')+'"':''}`
+  );
+
+  // Close dialog and clear pending state
   window._pendingLog = null;
+  document.getElementById('logDialogOverlay').classList.remove('open');
+
+  // Show toast immediately
+  showToast(p.type==='call'?'C':'T', p.type==='call'?'Call logged!':'Text logged!', vis?vis.firstName+' '+vis.lastName:'');
+
+  // Defer all re-renders to next tick so dialog close animation completes
+  setTimeout(() => {
+    fbPaused = false;
+    // Refresh visitor modal if still open
+    if (activeModalId === p.visitorId) openVisitorModal(activeModalId);
+    else refreshAll();
+  }, 50);
 }
 
 function closeLogDialog() {
-  fbPaused = false;
-  document.getElementById('logDialogOverlay').classList.remove('open');
   window._pendingLog = null;
+  document.getElementById('logDialogOverlay').classList.remove('open');
+  setTimeout(() => { fbPaused = false; }, 50);
 }
 
 // ── VISITOR MODAL ──
