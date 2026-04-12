@@ -2366,7 +2366,7 @@ function renderDashboard() {
     const growPct = pmCount>0 ? Math.round((tmCount-pmCount)/pmCount*100) : 0;
     const sixMs = 6*30*24*60*60*1000;
     const secondPhones = new Set(second.map(v=>v.phone.replace(/\s/g,'')));
-    const atRiskCount = first.filter(v=>{ const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date); return d&&(now-d)>=sixMs&&!secondPhones.has(v.phone.replace(/\s/g,'')); }).length;
+    const atRiskCount = first.filter(v=>{ if(contactedIds.has(v.id)) return false; const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date); return d&&(now-d)>=sixMs&&!secondPhones.has(v.phone.replace(/\s/g,'')); }).length;
     const sunFirst  = data.filter(v=>v.visitType==='first'  && v.serviceDay==='sunday').length;
     const wedFirst  = data.filter(v=>v.visitType==='first'  && v.serviceDay==='wednesday').length;
     const sunSecond = data.filter(v=>v.visitType==='second' && v.serviceDay==='sunday').length;
@@ -2497,6 +2497,7 @@ function renderDashboard() {
     const secondPhones2=new Set(second.map(v=>v.phone.replace(/\s/g,'')));
     const atRisk=visitors.filter(v=>{
       if(v.visitType!=='first') return false;
+      if(contactedIds.has(v.id)) return false; // exclude if contacted
       const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date);
       return d&&(now-d)>=sixMs&&!secondPhones2.has(v.phone.replace(/\s/g,''));
     }).sort((a,b)=>new Date(a.dateRaw||a.date)-new Date(b.dateRaw||b.date));
@@ -2843,6 +2844,7 @@ function renderRecordsTable() {
     const secPhones=new Set(visitors.filter(v=>v.visitType==='second').map(v=>v.phone.replace(/\s/g,'')));
     data = data.filter(v=>{
       if(v.visitType!=='first') return false;
+      if(contactedIds.has(v.id)) return false; // exclude if contacted
       const d=v.dateRaw?new Date(v.dateRaw):parseDateStr(v.date);
       return d&&(now-d)>=sixMs&&!secPhones.has(v.phone.replace(/\s/g,''));
     });
@@ -3100,7 +3102,7 @@ function saveContactLog() {
   const comment = document.getElementById('logDialogComment').value.trim();
   const now = new Date();
   const dateShort = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  contactLogs.push({ id:Date.now(), memberId:p.memberId, visitorId:p.visitorId, type:p.type, comment, date:now.toISOString(), dateShort });
+  contactLogs.push({ id:Date.now(), memberId:p.memberId||null, visitorId:p.visitorId, type:p.type, comment, date:now.toISOString(), dateShort, who:mem2?.name||currentUser||'Team' });
   fbSave('contactLogs', contactLogs);
   const vis2 = visitors.find(v=>v.id===p.visitorId);
   const mem2 = teamMembers.find(m=>m.id===p.memberId);
@@ -4126,6 +4128,7 @@ function checkNudges() {
     }
   });
 
+  // NOTE: at-risk nudges were removed (handled by dashboard panel)
   // 3. Upcoming birthdays within 7 days
   visitors.forEach(v => {
     if (!v.dob) return;
