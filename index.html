@@ -1044,6 +1044,9 @@ textarea{resize:vertical;min-height:80px}
     <!-- KPIs -->
     <div class="kpi-strip" id="kpiStrip"></div>
 
+    <!-- This Week's Services — top of dashboard -->
+    <div class="dc dg-full" id="dashTodayServiceCard" style="margin-bottom:14px"></div>
+
     <!-- Row 1: Donut · Trend · At-Risk -->
     <div class="dg-3">
       <div class="dc" id="dashDonutCard"></div>
@@ -1067,9 +1070,6 @@ textarea{resize:vertical;min-height:80px}
     </div>
 
     <!-- Birthday + Due Today -->
-    <!-- Today's Service Stats -->
-    <div class="dc dg-full" id="dashTodayServiceCard" style="margin-bottom:14px"></div>
-
     <div id="dueTodayWidget"></div>
     <div id="birthdayWidget"></div>
 
@@ -2639,17 +2639,28 @@ function renderDashboard() {
   const todaySvcEl = document.getElementById('dashTodayServiceCard');
   if (todaySvcEl) {
     const now = new Date();
-    const todayStr = now.toISOString().slice(0,10);
+    // Use LOCAL date to avoid UTC-offset issues (Nigeria is UTC+1)
+    const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
     const isSunday = now.getDay() === 0;
     const isWednesday = now.getDay() === 3;
     const isServiceDay = isSunday || isWednesday;
 
+    // Helper: get local YYYY-MM-DD from a visitor's date fields (timezone safe)
+    function visitorLocalDate(v) {
+      const d = parseDateStr(v.date);
+      if (d && !isNaN(d)) {
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+      if (v.dateRaw) {
+        const dr = new Date(v.dateRaw);
+        return dr.getFullYear()+'-'+String(dr.getMonth()+1).padStart(2,'0')+'-'+String(dr.getDate()).padStart(2,'0');
+      }
+      return null;
+    }
+
     // Helper: get stats for a given date string
     function getServiceStats(dateStr) {
-      const vs = visitors.filter(v => {
-        const d = parseDateStr(v.date) || (v.dateRaw ? new Date(v.dateRaw) : null);
-        return d && d.toISOString().slice(0,10) === dateStr;
-      });
+      const vs = visitors.filter(v => visitorLocalDate(v) === dateStr);
       return {
         first:     vs.filter(v=>v.visitType==='first').length,
         second:    vs.filter(v=>v.visitType==='second').length,
@@ -2658,11 +2669,11 @@ function renderDashboard() {
       };
     }
 
-    // Find most recent date for a given service day (at or before today)
+    // Find most recent date for a given service day (at or before today, timezone safe)
     function latestServiceDate(svcDay, excludeDate) {
       const dates = [...new Set(visitors
         .filter(v => v.serviceDay === svcDay)
-        .map(v => { const d = parseDateStr(v.date)||(v.dateRaw?new Date(v.dateRaw):null); return d?d.toISOString().slice(0,10):null; })
+        .map(v => visitorLocalDate(v))
         .filter(d => d && d <= todayStr && d !== excludeDate)
       )].sort().reverse();
       return dates[0] || null;
@@ -2687,8 +2698,12 @@ function renderDashboard() {
       // Previous service date for comparison
       const prevDate  = latestServiceDate(svcDay, latestDate);
       const prevStats = prevDate ? getServiceStats(prevDate) : null;
-      const prevLabel = prevDate ? new Date(prevDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
-      const dateLabel = isToday ? 'Today' : new Date(latestDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const prevLabel = prevDate ? new Date(prevDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
+      // Format latest date properly
+      const latestDateFmt = new Date(latestDate+'T12:00:00');
+      const dateLabel = isToday
+        ? 'Today · ' + latestDateFmt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+        : latestDateFmt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 
       return `<div>
         <div style="padding:10px 16px 6px;background:${labelBg};display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
