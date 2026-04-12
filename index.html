@@ -1775,6 +1775,7 @@ let currentRole = '';
 let tasks       = [];
 let nudges      = [];
 let fbReady     = false; // true once data loaded from Firebase
+let fbPaused    = false; // true while a dialog is open
 let taskFilter  = 'all';
 let currentFilter = 'all';
 let activeModalId = null;
@@ -2045,28 +2046,28 @@ function setupRealtimeListeners() {
   if (!fbDb) return;
   fbDb.ref('connecttrack/visitors').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) {
+    if (v && fbReady && !fbPaused) {
       visitors = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
       refreshAll();
     }
   });
   fbDb.ref('connecttrack/contactLogs').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) {
+    if (v && fbReady && !fbPaused) {
       contactLogs = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
       refreshAll();
     }
   });
   fbDb.ref('connecttrack/tasks').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) {
+    if (v && fbReady && !fbPaused) {
       tasks = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
       renderFollowupsPage(); renderDueTodayWidget();
     }
   });
   fbDb.ref('connecttrack/teamMembers').on('value', snap => {
     const v = snap.val();
-    if (v && fbReady) {
+    if (v && fbReady && !fbPaused) {
       teamMembers = Array.isArray(v) ? v.filter(Boolean) : Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]).filter(Boolean);
       renderTeamPage();
     }
@@ -3111,6 +3112,7 @@ function logContact(memberId, visitorId, type) {
       <div style="font-size:11px;color:var(--mid);margin-top:1px">${v.phone}${v.email?' · '+v.email:''}</div>
     </div>`;
 
+  fbPaused = true;
   document.getElementById('logDialogOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('logDialogComment').focus(), 200);
 }
@@ -3141,6 +3143,7 @@ function saveContactLog() {
 }
 
 function closeLogDialog() {
+  fbPaused = false;
   document.getElementById('logDialogOverlay').classList.remove('open');
   window._pendingLog = null;
 }
@@ -3234,10 +3237,12 @@ function openVisitorModal(id) {
     workerBtn.style.background = '#059669';
     workerBtn.style.color = 'white';
   }
+  fbPaused = true;
   document.getElementById('visitorModalOverlay').classList.add('open');
 }
 function closeVisitorModal(e) {
   if (!e || e.target===document.getElementById('visitorModalOverlay')) {
+    fbPaused = false;
     document.getElementById('visitorModalOverlay').classList.remove('open');
     activeModalId = null;
   }
