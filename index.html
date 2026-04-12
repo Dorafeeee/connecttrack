@@ -2856,7 +2856,8 @@ function renderRecordsTable() {
     data = data.filter(v => {
       const d = parseDateStr(v.date) || (v.dateRaw ? new Date(v.dateRaw) : null);
       if (!d) return false;
-      return d.toISOString().slice(0,10) === dateFilterVal;
+      const localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      return localDate === dateFilterVal;
     });
   }
   if (currentFilter==='atrisk') {
