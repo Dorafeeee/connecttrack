@@ -1572,6 +1572,35 @@ textarea{resize:vertical;min-height:80px}
     <div class="modal-body" id="mpModalBody"></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeMemberModal()">Close</button>
+      <button class="btn btn-gold" id="editMemberBtn" onclick="openEditMemberModal()">Edit Details</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT TEAM MEMBER MODAL ══ -->
+<div class="modal-overlay" id="editMemberModalOverlay" onclick="closeEditMemberModal(event)">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div><div class="modal-title">Edit Team Member</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px" id="editMemberSub"></div></div>
+      <button class="modal-close" onclick="closeEditMemberModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="f-group"><label>Full Name</label><input type="text" id="editMemberName" placeholder="e.g. Doyinsola Adeyemi"></div>
+      <div class="f-group"><label>Role / Title</label><input type="text" id="editMemberRole" placeholder="e.g. Connect Team — Caller"></div>
+      <div class="f-group"><label>Phone Number</label><input type="tel" id="editMemberPhone" placeholder="e.g. 08031234567"></div>
+      <div class="f-group"><label>Email Address</label><input type="email" id="editMemberEmail" placeholder="e.g. name@petra.ct"></div>
+      <div class="f-group"><label>Assigned To</label>
+        <select id="editMemberAssign" class="f-input">
+          <option value="both">Both (First & Second Timers)</option>
+          <option value="first">First Timers Only</option>
+          <option value="second">Second Timers Only</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEditMemberModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditMember()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -4247,6 +4276,49 @@ function renderNudgesPage() {
         <div class="nudge-time">${n.time?'Generated '+new Date(n.time).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}</div>
       </div>
     </div>`).join('');
+}
+
+
+// ── EDIT TEAM MEMBER ──
+function openEditMemberModal() {
+  const m = teamMembers.find(x=>x.id===activeMemberId);
+  if (!m) return;
+  document.getElementById('editMemberSub').textContent = m.name;
+  document.getElementById('editMemberName').value  = m.name  || '';
+  document.getElementById('editMemberRole').value  = m.role  || '';
+  document.getElementById('editMemberPhone').value = m.phone || '';
+  document.getElementById('editMemberEmail').value = m.email || '';
+  document.getElementById('editMemberAssign').value = m.assign || 'both';
+  document.getElementById('editMemberModalOverlay').classList.add('open');
+}
+
+function closeEditMemberModal(e) {
+  if (!e || e.target===document.getElementById('editMemberModalOverlay'))
+    document.getElementById('editMemberModalOverlay').classList.remove('open');
+}
+
+function saveEditMember() {
+  const m = teamMembers.find(x=>x.id===activeMemberId);
+  if (!m) return;
+  const name  = document.getElementById('editMemberName').value.trim();
+  const role  = document.getElementById('editMemberRole').value.trim();
+  const phone = document.getElementById('editMemberPhone').value.trim();
+  const email = document.getElementById('editMemberEmail').value.trim();
+  const assign = document.getElementById('editMemberAssign').value;
+  if (!name) { showToast('!','Name required','Please enter a name'); return; }
+  m.name   = name;
+  m.role   = role   || m.role;
+  m.phone  = phone;
+  m.email  = email;
+  m.assign = assign;
+  fbSave('teamMembers', teamMembers);
+  addAudit('U','Team Member Updated', `${name} details updated`);
+  closeEditMemberModal();
+  // Refresh profile modal with updated info
+  document.getElementById('mpModalTitle').textContent = m.name;
+  document.getElementById('mpModalSub').textContent = m.role + (m.phone?' · '+m.phone:'');
+  renderTeamPage();
+  showToast('✓', `${name} updated!`, phone ? 'Phone: '+phone : '');
 }
 
 // ── GLOBAL SEARCH ──
