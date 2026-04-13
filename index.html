@@ -2470,7 +2470,7 @@ function renderDashboard() {
   // ── DONUT ──
   const donutEl = document.getElementById('dashDonutCard');
   if (donutEl) {
-    const segs=[{val:first.length,color:'#0F766E',label:'First Timers'},{val:second.length,color:'#6D28D9',label:'Second Timers'},{val:workers.length,color:'#059669',label:'Workers'}].filter(s=>s.val>0);
+    const segs=[{val:first.length,color:'#0F766E',label:'First Timers'},{val:second.length,color:'#6D28D9',label:'Second Timers'},{val:workers.length,color:'#B8860B',label:'Workers'}].filter(s=>s.val>0);
     const totalVal=segs.reduce((s,x)=>s+x.val,0)||1;
     const r=52,cx=72,cy=72,sw=14;
     const circ=2*Math.PI*r;
@@ -4417,19 +4417,17 @@ function buildReminderData() {
 }
 
 function buildWhatsAppMessage(m, uncontacted) {
-  const names = uncontacted.slice(0, 10).map((v,i) =>
+  const names = uncontacted.map((v,i) =>
     `${i+1}. ${v.firstName} ${v.lastName} — ${v.phone}`
   ).join('\n');
-  const extra = uncontacted.length > 10 ? `\n...and ${uncontacted.length - 10} more.` : '';
-  return `Hi ${m.name}, hope you're well! 😊\n\nThis is a reminder that you have *${uncontacted.length} visitor${uncontacted.length>1?'s':''} who haven't been contacted yet*:\n\n${names}${extra}\n\nPlease reach out to them before Monday 5pm. Thank you and God bless! 🙏\n\n— ConnectTrack, Petra Christian Centre`;
+  return `Hi ${m.name}, hope you're well! 😊\n\nThis is a reminder that you have *${uncontacted.length} visitor${uncontacted.length>1?'s':''} who haven't been contacted yet*:\n\n${names}\n\nPlease reach out to them before Monday 5pm. Thank you and God bless! 🙏\n\n— ConnectTrack, Petra Christian Centre`;
 }
 
 function buildEmailBody(m, uncontacted) {
-  const rows = uncontacted.slice(0,20).map((v,i) =>
+  const rows = uncontacted.map((v,i) =>
     `${i+1}. ${v.firstName} ${v.lastName} | ${v.phone} | ${v.visitType==='first'?'First Timer':'Second Timer'} | ${v.serviceDay==='sunday'?'Sunday':'Wednesday'}`
   ).join('\n');
-  const extra = uncontacted.length > 20 ? `\n...and ${uncontacted.length - 20} more.` : '';
-  return `Hi ${m.name},\n\nThis is your weekly ConnectTrack reminder from Petra Christian Centre Connect Team.\n\nYou have ${uncontacted.length} visitor${uncontacted.length>1?'s':''} who have not been contacted yet:\n\n${rows}${extra}\n\nPlease reach out to all of them before Monday 5:00pm.\n\nThank you for your service!\n\nGod bless,\nPetra Connect Team`;
+  return `Hi ${m.name},\n\nThis is your weekly ConnectTrack reminder from Petra Christian Centre Connect Team.\n\nYou have ${uncontacted.length} visitor${uncontacted.length>1?'s':''} who have not been contacted yet:\n\n${rows}\n\nPlease reach out to all of them before Monday 5:00pm.\n\nThank you for your service!\n\nGod bless,\nPetra Connect Team`;
 }
 
 function saveEmailJSConfig() {
