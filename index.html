@@ -3013,10 +3013,21 @@ function deleteTeamMember(id) {
   const m = teamMembers.find(x=>x.id===id);
   teamMembers = teamMembers.filter(m=>m.id!==id);
   fbSave('teamMembers', teamMembers);
-  if (m) addAudit('U×','Team Member Removed',`${m.name} was removed from the team`);
+
+  // Remove this member's ID from all visitor assignments
+  let visitorsChanged = false;
+  visitors = visitors.map(v => {
+    if (!v.assignedMemberIds || !v.assignedMemberIds.includes(id)) return v;
+    const updated = v.assignedMemberIds.filter(mid => mid !== id);
+    visitorsChanged = true;
+    return { ...v, assignedMemberIds: updated };
+  });
+  if (visitorsChanged) fbSave('visitors', visitors);
+
+  if (m) addAudit('U×','Team Member Removed',`${m.name} was removed from the team — assignments cleared`);
   renderTeamList();
   refreshAll();
-  showToast('×','Member removed','Team updated');
+  showToast('×','Member removed','Visitor assignments cleared');
 }
 
 // ── MEMBER PROFILE MODAL ──
