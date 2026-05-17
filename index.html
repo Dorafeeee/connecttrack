@@ -1010,6 +1010,60 @@ textarea{resize:vertical;min-height:80px}
 .member-panel-section{padding:16px 22px;border-bottom:1px solid var(--border)}
 .member-panel-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
 
+
+/* ══ DASHBOARD REDESIGN v2 ══ */
+
+/* Greeting hero */
+.dash-greeting{background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F2744 100%);border-radius:20px;padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden}
+.dash-greeting::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(212,160,23,.15),transparent 70%);pointer-events:none}
+.dash-greeting-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:rgba(212,160,23,.7);margin-bottom:6px}
+.dash-greeting-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:white;margin-bottom:4px}
+.dash-greeting-sub{font-size:13px;color:rgba(255,255,255,.5)}
+.dash-greeting-right{margin-left:auto;text-align:right}
+.dash-greeting-date{font-size:13px;font-weight:600;color:rgba(255,255,255,.7)}
+.dash-greeting-service{font-size:11px;color:rgba(212,160,23,.8);margin-top:4px}
+
+/* KPI row v2 - 4 cards, cleaner */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-v2{background:var(--white);border-radius:16px;padding:18px 20px;border:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.kpi-v2:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.kpi-v2-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.kpi-v2-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.kpi-v2-val{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;line-height:1;margin-bottom:6px}
+.kpi-v2-sub{font-size:11px;color:var(--mid);line-height:1.4}
+.kpi-v2-breakdown{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.kpi-v2-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px}
+
+/* Two-column layout */
+.dash-cols{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:16px}
+.dash-cols.reverse{grid-template-columns:380px 1fr}
+
+/* Action panel (right column) */
+.action-panel{display:flex;flex-direction:column;gap:12px}
+.action-card{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden}
+.action-card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.action-card-title{font-size:13px;font-weight:700;color:var(--deep)}
+.action-card-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.action-card-body{padding:12px 16px}
+.action-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.action-item:last-child{border-bottom:none}
+.action-item:hover{background:var(--soft);margin:0 -16px;padding:8px 16px}
+
+/* Services this week card */
+.svc-week-card{background:var(--white);border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.svc-week-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.svc-panels{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.svc-panel{padding:16px 20px}
+.svc-panel:first-child{border-right:1px solid var(--border)}
+.svc-panel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.svc-stat-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.svc-stat-label{font-size:11px;color:var(--mid)}
+.svc-stat-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.svc-stat-delta{font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:6px}
+.svc-stat-delta.up{background:#F0FDF4;color:#059669}
+.svc-stat-delta.down{background:#FEF2F2;color:#DC2626}
+.svc-stat-delta.flat{background:var(--soft);color:var(--mid)}
+
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -2944,11 +2998,11 @@ function renderDashboard() {
         : latestDateFmt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 
       return `<div>
-        <div style="padding:10px 16px 6px;background:${labelBg};display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
-          <span style="font-size:11px;font-weight:700;color:${labelColor}">${serviceLabel} · ${dateLabel}</span>
-          <span style="font-size:11px;font-weight:700;color:${labelColor}">${stats.total} total</span>
+        <div class="svc-panel-label" style="color:${labelColor};background:${labelBg};margin:-16px -20px 12px;padding:8px 20px">
+          <span>${serviceLabel}</span>
+          <span style="font-size:11px;font-weight:700">${dateLabel} · ${stats.total} total</span>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
           ${[
             {label:'First Timers',  val:stats.first,     prev:prevStats?.first,     color:'var(--first)'},
             {label:'Second Timers', val:stats.second,    prev:prevStats?.second,    color:'var(--second)'},
@@ -2971,14 +3025,13 @@ function renderDashboard() {
     const wedPanel = buildServicePanel('wednesday', '#6D28D9',         'rgba(109,40,217,.06)',  'Wednesday');
 
     todaySvcEl.innerHTML = `
-      <div class="dc-hdr">
-        <div><div class="dc-title">This Week's Services</div>
-          <div class="dc-sub">${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
-        </div>
+      <div class="svc-week-hdr">
+        <div><div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--deep)">This Week's Services</div></div>
+        <span style="font-size:11px;color:var(--mid)">${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
-        <div style="border-right:1px solid var(--border)">${sunPanel}</div>
-        <div>${wedPanel}</div>
+      <div class="svc-panels">
+        <div class="svc-panel">${sunPanel}</div>
+        <div class="svc-panel">${wedPanel}</div>
       </div>`;
   }
 
