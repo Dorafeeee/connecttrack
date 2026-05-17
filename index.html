@@ -917,6 +917,10 @@ textarea{resize:vertical;min-height:80px}
 .login-entry-ago{font-size:10px;color:var(--muted);margin-top:2px}
 .login-entry-device{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic}
 
+
+.dual-tag-wrap{display:flex;flex-direction:column;gap:3px}
+.returned-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(109,40,217,.1);color:#6D28D9;display:inline-block}
+
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -1216,6 +1220,9 @@ textarea{resize:vertical;min-height:80px}
         <button class="f-btn" id="clearDateBtn" onclick="document.getElementById('recDateFilter').value='';filterRec(currentFilter,null)" style="padding:5px 10px;font-size:11px;display:none">✕ Clear date</button>
       </div>
       <div style="margin-left:auto">
+        <select id="recMemberFilter" class="df-select" style="font-size:12px;padding:6px 10px" onchange="filterRec(currentFilter,null)">
+          <option value="">All Team Members</option>
+        </select>
         <div class="search-box"><span style="display:flex;align-items:center;color:var(--mid)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.5"/><line x1="8.5" y1="8.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><input type="text" id="recSearch" placeholder="Search by name…" oninput="filterRec(currentFilter,null,this.value)"></div>
       </div>
     </div>
@@ -2422,12 +2429,12 @@ function renderDashboard() {
     const wedSecond = data.filter(v=>v.visitType==='second' && v.serviceDay==='wednesday').length;
 
     kpiEl.innerHTML = `
-      <div class="kpi-card kpi-total">
+      <div class="kpi-card kpi-total" style="cursor:pointer" onclick="filterRec('all',document.querySelector('.nav-item[onclick*=records]'));showPage('records',document.querySelector('.nav-item[onclick*=records]'))">
         <div class="kpi-label">Total Visitors</div>
         <div class="kpi-value" style="color:var(--gold-mid)">${total.toLocaleString()}</div>
         <div class="kpi-sub">${tmCount>0?`+${tmCount} this month`:'All time'}</div>
       </div>
-      <div class="kpi-card kpi-first">
+      <div class="kpi-card kpi-first" style="cursor:pointer" onclick="filterRec('first',document.querySelector('.f-btn'));showPage('records',document.querySelector('.nav-item[onclick*=records]'))">
         <div class="kpi-label">First Timers</div>
         <div class="kpi-value" style="color:var(--first)">${first.length.toLocaleString()}</div>
         <div class="kpi-sub" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -2441,7 +2448,7 @@ function renderDashboard() {
           </span>
         </div>
       </div>
-      <div class="kpi-card kpi-second">
+      <div class="kpi-card kpi-second" style="cursor:pointer" onclick="filterRec('second',document.querySelector('.f-btn'));showPage('records',document.querySelector('.nav-item[onclick*=records]'))">
         <div class="kpi-label">Second Timers</div>
         <div class="kpi-value" style="color:var(--second)">${second.length.toLocaleString()}</div>
         <div class="kpi-sub" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -2455,7 +2462,7 @@ function renderDashboard() {
           </span>
         </div>
       </div>
-      <div class="kpi-card kpi-return">
+      <div class="kpi-card kpi-return" style="cursor:pointer" onclick="filterRec('all',null);document.getElementById('recDateFilter') && (document.getElementById('recDateFilter').value='');showPage('records',document.querySelector('.nav-item[onclick*=records]'))">
         <div class="kpi-label">Contacted</div>
         <div class="kpi-value" style="color:#F97316">${contacted.toLocaleString()}</div>
         <div class="kpi-sub">${Math.round(contacted/Math.max(total,1)*100)}% follow-up rate</div>
@@ -2900,6 +2907,13 @@ function renderRecordsTable() {
     });
   }
   if (q) data = data.filter(v=>`${v.firstName} ${v.lastName}`.toLowerCase().includes(q.toLowerCase()));
+  // Member filter
+  const memberFilterVal = document.getElementById('recMemberFilter')?.value || '';
+  if (memberFilterVal) {
+    const mid = parseInt(memberFilterVal);
+    data = data.filter(v => (v.assignedMemberIds||[]).includes(mid));
+  }
+
   data = sortByDate(data);
   const el = document.getElementById('recordsTable');
   if (!data.length) { el.innerHTML=`<div class="empty-state"><div class="es-text">No records found</div></div>`; return; }
@@ -2942,7 +2956,15 @@ function renderRecordsTable() {
         <td style="font-size:11px">${v.phone}</td>
         <td style="font-size:11px;color:var(--mid)">${v.email||'—'}</td>
         <td style="font-size:11px;color:var(--mid);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</td>
-        <td><div style="display:flex;align-items:center;flex-wrap:wrap;gap:3px">${v.visitType==='first'?`<span class="t-badge t-badge-first">First Timer</span>${v.hasReturned?'<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:#F0FDF4;color:#059669">Returned</span>':''}` :'<span class="t-badge t-badge-second">Second Timer</span>'}${svcBadge}</div></td>
+        <td><div class="dual-tag-wrap">
+          <div style="display:flex;align-items:center;gap:4px">
+            ${v.visitType==='first'
+              ? `<span class="t-badge t-badge-first">First Timer</span>`
+              : `<span class="t-badge t-badge-second">Second Timer</span>`}
+            ${svcBadge}
+          </div>
+          ${v.hasReturned ? '<span class="returned-tag">↑ Also Second Timer</span>' : ''}
+        </div></td>
         <td><span class="t-src">${srcLabel(v.source)}</span></td>
         <td style="font-size:11px;color:var(--mid)">${v.date}</td>
         <td>${v.isWorker?'<span class="worker-badge">Worker</span>':'<span style="font-size:11px;color:var(--mid)">—</span>'}</td>
@@ -4332,6 +4354,16 @@ function saveEditMember() {
   showToast('✓', `${name} updated!`, phone ? 'Phone: '+phone : '');
 }
 
+
+// ── TEAM UNCONTACTED THIS YEAR ──
+let teamShowUncontactedOnly = false;
+function toggleTeamUncontacted(btn) {
+  teamShowUncontactedOnly = !teamShowUncontactedOnly;
+  btn.style.background = teamShowUncontactedOnly ? '#DC2626' : '';
+  btn.style.color = teamShowUncontactedOnly ? 'white' : '#DC2626';
+  renderTeamPage();
+}
+
 // ── GLOBAL SEARCH ──
 function globalSearch(q) {
   const el = document.getElementById('searchResults');
@@ -4608,7 +4640,14 @@ function renderTeamPage() {
     teamMembers.map(m=>{
       const col = avColor(m.name);
       const ini = m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-      const assigned = getAssignedVisitors(m);
+      let assigned = getAssignedVisitors(m);
+      if (teamShowUncontactedOnly) {
+        assigned = assigned.filter(v => {
+          if (contactedIds2.has(v.id)) return false;
+          const d = parseDateStr(v.date)||(v.dateRaw?new Date(v.dateRaw):null);
+          return d && d.getFullYear() === thisYear;
+        });
+      }
       // Only count calls/texts made to visitors assigned to this member
       const assignedIds = new Set(assigned.map(v=>v.id));
       const logs = contactLogs.filter(l=>l.memberId===m.id && assignedIds.has(l.visitorId));
