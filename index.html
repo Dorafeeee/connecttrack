@@ -29,7 +29,13 @@ body{font-family:'DM Sans','Outfit',sans-serif;background:var(--soft);color:var(
 .app{display:flex;min-height:100vh}
 
 /* ── SIDEBAR ── */
-.sidebar{width:268px;background:var(--deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(212,160,23,.2) transparent;transition:width .25s cubic-bezier(.4,0,.2,1)}.sidebar.collapsed{width:64px;overflow:visible}.sidebar.collapsed .sidebar-label,.sidebar.collapsed .sidebar-section,.sidebar.collapsed .campus-bar,.sidebar.collapsed .sidebar-wordmark,.sidebar.collapsed .sidebar-tagline{display:none}.sidebar.collapsed .nav-item{justify-content:center;padding:10px 0}.sidebar.collapsed .nav-icon{margin:0}.sidebar.collapsed .logo-wrap{justify-content:center;padding:14px 0}
+.sidebar{width:268px;background:var(--deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow:hidden;scrollbar-width:thin;scrollbar-color:rgba(212,160,23,.2) transparent;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.sidebar.collapsed{width:64px}
+.sidebar.collapsed .nav-item{justify-content:center;padding:12px 0;width:100%}
+.sidebar.collapsed .nav-icon{margin:0!important}
+.sidebar.collapsed .brand{align-items:center;padding:14px 0}
+.main{flex:1;margin-left:268px;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .3s cubic-bezier(.4,0,.2,1)}
+.main.expanded{margin-left:68px}
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(212,160,23,.2);border-radius:2px}
 
@@ -94,7 +100,7 @@ body{font-family:'DM Sans','Outfit',sans-serif;background:var(--soft);color:var(
 .service-date{font-size:11px;color:var(--gold-mid);font-weight:600}
 
 /* ── MAIN ── */
-.main{flex:1;margin-left:268px;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .25s cubic-bezier(.4,0,.2,1)}.main.expanded{margin-left:64px}
+
 .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:14px;box-sizing:border-box}
 .topbar-title{font-family:'Playfair Display','Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--deep);white-space:nowrap}
 .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -1114,19 +1120,19 @@ textarea{resize:vertical;min-height:80px}
   </button>
   <nav class="nav">
     <div class="nav-section-label">Menu</div>
-    <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg></span>Dashboard</button>
-    <button class="nav-item" onclick="showPage('register',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M1 14.5c0-3.038 2.462-5.5 5.5-5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 9.5v5M9.5 12h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span class="sidebar-label">Register Visitor</span></button>
-    <button class="nav-item" onclick="showPage('records',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2.5" rx="1.25" fill="currentColor"/><rect x="1" y="6.75" width="10" height="2.5" rx="1.25" fill="currentColor" opacity=".65"/><rect x="1" y="11.5" width="12" height="2.5" rx="1.25" fill="currentColor" opacity=".4"/></svg></span><span class="sidebar-label">All Records</span></button>
+    <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg></span><span class="sidebar-label">Dashboard</span></button>
+    <button class="nav-item" title="Register Visitor" onclick="showPage('register',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M1 14.5c0-3.038 2.462-5.5 5.5-5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 9.5v5M9.5 12h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span class="sidebar-label">Register Visitor</span></button>
+    <button class="nav-item" title="All Records" onclick="showPage('records',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2.5" rx="1.25" fill="currentColor"/><rect x="1" y="6.75" width="10" height="2.5" rx="1.25" fill="currentColor" opacity=".65"/><rect x="1" y="11.5" width="12" height="2.5" rx="1.25" fill="currentColor" opacity=".4"/></svg></span><span class="sidebar-label">All Records</span></button>
     <div class="sidebar-section nav-section-label" style="margin-top:8px">Management</div>
-    <button class="nav-item" onclick="showPage('team',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M0.5 14.5c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12.5" cy="4" r="2" fill="currentColor" opacity=".55"/><path d="M11 14.5c0-1.933 1.2-3.6 3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg></span><span class="sidebar-label">Team Members</span></button>
-    <button class="nav-item" onclick="showPage('pastor',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v13M1.5 8h13" stroke="currentColor" stroke-width="1.2" opacity=".7"/><path d="M2.5 5c1.5 1.2 3.2 1.8 5.5 1.8S11 6.2 12.5 5M2.5 11c1.5-1.2 3.2-1.8 5.5-1.8s3.5.6 5 1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg></span><span class="sidebar-label">Pastor's View</span></button>
-    <button class="nav-item" onclick="showPage('growth',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="13" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor" opacity=".7"/><circle cx="13" cy="3" r="1.5" fill="currentColor" opacity=".4"/><path d="M3 13L8 8L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="sidebar-label">Growth Track</span></button>
-    <button class="nav-item" onclick="showPage('attendance',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 7h14" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M5 1v4M11 1v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="1" fill="currentColor" opacity=".7"/><circle cx="8" cy="10.5" r="1" fill="currentColor" opacity=".7"/><circle cx="10.5" cy="10.5" r="1" fill="currentColor"/></svg></span><span class="sidebar-label">Attendance</span></button>
-    <button class="nav-item" onclick="showPage('search',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="9.5" y1="9.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3.5" y1="6" x2="8.5" y2="6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/><line x1="6" y1="3.5" x2="6" y2="8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span><span class="sidebar-label">Adv. Search</span></button>
-    <button class="nav-item" onclick="showPage('assimilation',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="9" r="2" fill="currentColor" opacity=".7"/></svg></span><span class="sidebar-label">Assimilation</span></button>
-    <button class="nav-item" onclick="showPage('followups',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 11l1.5 1.5L15 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="sidebar-label">Follow-ups</span></button>
-    <button class="nav-item" id="nudgeNavBtn" onclick="showPage('nudges',this)" style="position:relative"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5a4.5 4.5 0 014.5 4.5v2.5l1 2H2.5l1-2V6A4.5 4.5 0 018 1.5z" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.4"/></svg></span>Nudges<span class="nudge-dot" id="nudgeNavDot" style="display:none;top:8px;right:12px"></span></button>
-    <button class="nav-item" onclick="showPage('audit',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2.5" y="3" width="11" height="12" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 1.5h5a1 1 0 011 1V4h-7V2.5a1 1 0 011-1z" fill="currentColor" opacity=".75"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="sidebar-label">Audit Log</span></button>
+    <button class="nav-item" title="Team Members" onclick="showPage('team',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="4.5" r="2.5" fill="currentColor"/><path d="M0.5 14.5c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12.5" cy="4" r="2" fill="currentColor" opacity=".55"/><path d="M11 14.5c0-1.933 1.2-3.6 3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg></span><span class="sidebar-label">Team Members</span></button>
+    <button class="nav-item" title="Pastor's View" onclick="showPage('pastor',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v13M1.5 8h13" stroke="currentColor" stroke-width="1.2" opacity=".7"/><path d="M2.5 5c1.5 1.2 3.2 1.8 5.5 1.8S11 6.2 12.5 5M2.5 11c1.5-1.2 3.2-1.8 5.5-1.8s3.5.6 5 1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg></span><span class="sidebar-label">Pastor's View</span></button>
+    <button class="nav-item" title="Growth Track" onclick="showPage('growth',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="13" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor" opacity=".7"/><circle cx="13" cy="3" r="1.5" fill="currentColor" opacity=".4"/><path d="M3 13L8 8L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="sidebar-label">Growth Track</span></button>
+    <button class="nav-item" title="Attendance" onclick="showPage('attendance',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 7h14" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M5 1v4M11 1v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="1" fill="currentColor" opacity=".7"/><circle cx="8" cy="10.5" r="1" fill="currentColor" opacity=".7"/><circle cx="10.5" cy="10.5" r="1" fill="currentColor"/></svg></span><span class="sidebar-label">Attendance</span></button>
+    <button class="nav-item" title="Adv. Search" onclick="showPage('search',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="9.5" y1="9.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3.5" y1="6" x2="8.5" y2="6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/><line x1="6" y1="3.5" x2="6" y2="8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span><span class="sidebar-label">Adv. Search</span></button>
+    <button class="nav-item" title="Assimilation" onclick="showPage('assimilation',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="9" r="2" fill="currentColor" opacity=".7"/></svg></span><span class="sidebar-label">Assimilation</span></button>
+    <button class="nav-item" title="Follow-ups" onclick="showPage('followups',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 11l1.5 1.5L15 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="sidebar-label">Follow-ups</span></button>
+    <button class="nav-item" id="nudgeNavBtn" onclick="showPage('nudges',this)" style="position:relative"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5a4.5 4.5 0 014.5 4.5v2.5l1 2H2.5l1-2V6A4.5 4.5 0 018 1.5z" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.4"/></svg></span><span class="sidebar-label">Nudges</span><span class="nudge-dot" id="nudgeNavDot" style="display:none;top:8px;right:12px"></span></button>
+    <button class="nav-item" title="Audit Log" onclick="showPage('audit',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2.5" y="3" width="11" height="12" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 1.5h5a1 1 0 011 1V4h-7V2.5a1 1 0 011-1z" fill="currentColor" opacity=".75"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="sidebar-label">Audit Log</span></button>
   </nav>
 
 
@@ -1174,55 +1180,53 @@ textarea{resize:vertical;min-height:80px}
   <!-- ── DASHBOARD ── -->
   <div class="page active" id="page-dashboard">
 
-    <!-- Filter bar -->
-    <div class="df-wrap">
-      <span class="df-label">View by</span>
-      <select class="df-select" id="filterMode" onchange="onFilterModeChange(this.value)">
-        <option value="all">All Time</option>
-        <option value="monthly">Monthly</option>
-        <option value="quarterly">Quarterly</option>
-        <option value="yearly">Yearly</option>
-      </select>
-      <div id="filterSecondaryWrap" style="display:none">
-        <select class="df-select" id="filterSecondary" onchange="onFilterSecondaryChange(this.value)"></select>
+    <!-- Greeting + filter row -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px" id="dashGreeting"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-size:11px;font-weight:600;color:var(--mid)">View</span>
+        <select class="df-select" id="filterMode" onchange="onFilterModeChange(this.value)" style="font-size:12px">
+          <option value="all">All Time</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <div id="filterSecondaryWrap" style="display:none">
+          <select class="df-select" id="filterSecondary" onchange="onFilterSecondaryChange(this.value)" style="font-size:12px"></select>
+        </div>
       </div>
-      <span class="df-badge" id="filterLabel">All records</span>
     </div>
 
     <!-- Insight banner -->
     <div id="dashInsightBanner"></div>
 
-    <!-- KPIs -->
-    <div class="kpi-strip" id="kpiStrip"></div>
+    <!-- KPI row -->
+    <div class="kpi-row" id="kpiStrip"></div>
 
-    <!-- This Week's Services — top of dashboard -->
-    <div class="dc dg-full" id="dashTodayServiceCard" style="margin-bottom:14px"></div>
+    <!-- This week's services -->
+    <div class="svc-week-card" id="dashTodayServiceCard"></div>
 
-    <!-- Row 1: Donut · Trend · At-Risk -->
-    <div class="dg-3">
-      <div class="dc" id="dashDonutCard"></div>
-      <div class="dc" id="dashTrendCard"></div>
-      <div class="dc" id="dashAtRiskCard"></div>
+    <!-- Two column: charts left, action right -->
+    <div class="dash-cols">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dc" id="dashTrendCard"></div>
+        <div class="dc" id="dashSourceCard"></div>
+        <div class="dc" id="dashMomCard"></div>
+      </div>
+      <div class="action-panel">
+        <div class="dc" id="dashAtRiskCard"></div>
+        <div class="dc" id="dashDonutCard"></div>
+        <div class="dc" id="dashPeakCard"></div>
+        <div id="dueTodayWidget"></div>
+        <div id="birthdayWidget"></div>
+      </div>
     </div>
 
-    <!-- Row 2: Source+Demo · Peak months -->
-    <div class="dg-2">
-      <div class="dc" id="dashSourceCard"></div>
-      <div class="dc" id="dashPeakCard"></div>
-    </div>
-
-    <!-- Row 3: Month-over-Month -->
-    <div class="dc dg-full" id="dashMomCard"></div>
-
-    <!-- Row 4: Service Day Split + Growth Track -->
-    <div class="dg-2" style="grid-template-columns:1fr 1fr">
+    <!-- Growth track + service split -->
+    <div class="dg-2" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
       <div class="dc" id="dashServiceSplitCard"></div>
       <div class="dc" id="dashGrowthCard"></div>
     </div>
-
-    <!-- Birthday + Due Today -->
-    <div id="dueTodayWidget"></div>
-    <div id="birthdayWidget"></div>
 
     <!-- Tooltip -->
     <div class="chart-tooltip" id="chartTooltip"></div>
@@ -4605,13 +4609,21 @@ function toggleSidebar() {
   const main = document.querySelector('.main');
   const collapsed = sb.classList.toggle('collapsed');
   main.classList.toggle('expanded', collapsed);
+  // Hide/show all non-icon content directly
+  const toHide = sb.querySelectorAll('.brand-name,.brand-sub,.nav-section-label,.sidebar-label,.campus-bar,.sb-footer,.campus-label');
+  toHide.forEach(el => { el.style.display = collapsed ? 'none' : ''; });
   localStorage.setItem('ct_sidebar_collapsed', collapsed ? '1' : '0');
 }
 
 function initSidebar() {
   if (localStorage.getItem('ct_sidebar_collapsed') === '1') {
-    document.querySelector('.sidebar')?.classList.add('collapsed');
-    document.querySelector('.main')?.classList.add('expanded');
+    const sb = document.querySelector('.sidebar');
+    const main = document.querySelector('.main');
+    if (!sb) return;
+    sb.classList.add('collapsed');
+    main?.classList.add('expanded');
+    sb.querySelectorAll('.brand-name,.brand-sub,.nav-section-label,.sidebar-label,.campus-bar,.sb-footer,.campus-label')
+      .forEach(el => { el.style.display = 'none'; });
   }
 }
 
@@ -5039,6 +5051,10 @@ function renderAssimilationPage() {
     if (!d || d.getFullYear() < thisYear) return false;
     if (filterMember && !(v.assignedMemberIds||[]).includes(filterMember)) return false;
     return true;
+  }).sort((a,b)=>{
+    const da = parseDateStr(a.date)||(a.dateRaw?new Date(a.dateRaw):null);
+    const db = parseDateStr(b.date)||(b.dateRaw?new Date(b.dateRaw):null);
+    return (db||0)-(da||0);
   });
 
   if (!pool.length) {
