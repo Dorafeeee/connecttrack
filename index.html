@@ -2851,36 +2851,41 @@ function renderDashboard() {
     const males=data.filter(v=>v.gender&&v.gender.toLowerCase().startsWith('m')).length;
     const females=data.filter(v=>v.gender&&v.gender.toLowerCase().startsWith('f')).length;
     const gTot=males+females||1;
-    if (!srcData.length && !ageData.length) { srcEl.style.display='none'; } else { srcEl.style.display='';
-    srcEl.innerHTML=`
-      <div class="dc-hdr" style="align-items:center"><div><div class="dc-title">Source & Demographics</div><div class="dc-sub">How visitors found Petra</div></div></div>
-      <div class="dc-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px">How They Found Petra</div>
-          ${srcData.map(x=>`<div class="src-row" onmouseenter="showTip(event,'<b>${srcLabel(x.s)}</b><br>${x.tot} total · ${x.pct}% returned')" onmouseleave="hideTip()">
-            <div class="src-lbl" style="color:${srcColors[x.s]}">${srcLabel(x.s)}</div>
-            <div class="src-track"><div class="src-fill" style="width:${Math.round(x.tot/mx*100)}%;background:${srcColors[x.s]}"></div></div>
-            <div class="src-val">${x.tot}</div>
-          </div>`).join('')}
-        </div>
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px">Age Distribution</div>
-          ${ageData.map(x=>`<div class="ms-row" onmouseenter="showTip(event,'${x.ag} yrs: ${x.n} visitors')" onmouseleave="hideTip()">
-            <div class="ms-lbl">${x.ag}</div>
-            <div class="ms-bar"><div class="ms-fill" style="width:${Math.round(x.n/mxA*100)}%;background:var(--gold-mid)"></div></div>
-            <div class="ms-val">${x.n}</div>
-          </div>`).join('')}
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:8px">Gender</div>
-            <div style="height:8px;border-radius:20px;overflow:hidden;background:var(--soft);margin-bottom:6px"
-              onmouseenter="showTip(event,'Male: ${males} (${Math.round(males/gTot*100)}%)<br>Female: ${females} (${Math.round(females/gTot*100)}%)')" onmouseleave="hideTip()">
-              <div style="height:100%;width:${Math.round(males/gTot*100)}%;background:var(--first);border-radius:20px"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:11px">
-              <span style="color:var(--first);font-weight:600">Male ${Math.round(males/gTot*100)}%</span>
-              <span style="color:var(--second);font-weight:600">Female ${Math.round(females/gTot*100)}%</span>
-            </div>
-          </div>
-        </div>
-      </div>\`;
+    if (!srcData.length && !ageData.length) { srcEl.style.display='none'; } else {
+    srcEl.style.display='';
+    const malesPct = Math.round(males/gTot*100);
+    const femalesPct = Math.round(females/gTot*100);
+    const genderTip = 'Male: ' + males + ' (' + malesPct + '%)<br>Female: ' + females + ' (' + femalesPct + '%)';
+    const srcRows = srcData.map(x=>{
+      const tip = '<b>' + srcLabel(x.s) + '</b><br>' + x.tot + ' total · ' + x.pct + '% returned';
+      const w = Math.round(x.tot/mx*100);
+      return '<div class="src-row" onmouseenter="showTip(event,\'' + tip.replace(/'/g,"\\'") + '\')" onmouseleave="hideTip()">' +
+        '<div class="src-lbl" style="color:' + srcColors[x.s] + '">' + srcLabel(x.s) + '</div>' +
+        '<div class="src-track"><div class="src-fill" style="width:' + w + '%;background:' + srcColors[x.s] + '"></div></div>' +
+        '<div class="src-val">' + x.tot + '</div></div>';
+    }).join('');
+    const ageRows = ageData.map(x=>{
+      const w = Math.round(x.n/mxA*100);
+      return '<div class="ms-row" onmouseenter="showTip(event,\'' + x.ag + ' yrs: ' + x.n + ' visitors\')" onmouseleave="hideTip()">' +
+        '<div class="ms-lbl">' + x.ag + '</div>' +
+        '<div class="ms-bar"><div class="ms-fill" style="width:' + w + '%;background:var(--gold-mid)"></div></div>' +
+        '<div class="ms-val">' + x.n + '</div></div>';
+    }).join('');
+    srcEl.innerHTML =
+      '<div class="dc-hdr"><div><div class="dc-title">Source &amp; Demographics</div><div class="dc-sub">How visitors found Petra</div></div></div>' +
+      '<div class="dc-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
+        '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px">How They Found Petra</div>' + srcRows + '</div>' +
+        '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px">Age Distribution</div>' + ageRows +
+          '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">' +
+            '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:8px">Gender</div>' +
+            '<div style="height:8px;border-radius:20px;overflow:hidden;background:var(--soft);margin-bottom:6px" onmouseenter="showTip(event,\'' + genderTip + '\')" onmouseleave="hideTip()">' +
+              '<div style="height:100%;width:' + malesPct + '%;background:var(--first);border-radius:20px"></div></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px">' +
+              '<span style="color:var(--first);font-weight:600">Male ' + malesPct + '%</span>' +
+              '<span style="color:var(--second);font-weight:600">Female ' + femalesPct + '%</span>' +
+            '</div></div>' +
+        '</div>' +
+      '</div>';
     }
   }
 
