@@ -1150,10 +1150,10 @@ textarea{resize:vertical;min-height:80px}
 <!-- ══ MAIN ══ -->
 <main class="main">
   <header class="topbar">
-    <button onclick="toggleSidebar()" id="sidebarToggleBtn" style="width:36px;height:36px;border:1px solid var(--border);border-radius:10px;background:var(--white);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;transition:background .15s" title="Toggle menu">
-      <span id="sb-bar1" style="width:14px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s"></span>
-      <span id="sb-bar2" style="width:14px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s"></span>
-      <span id="sb-bar3" style="width:10px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s;align-self:flex-start;margin-left:2px"></span>
+    <button onclick="toggleSidebar()" id="sidebarToggleBtn" style="width:32px;height:32px;border:none;border-radius:8px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;padding:0" title="Toggle menu">
+      <span style="width:18px;height:2px;background:var(--deep);border-radius:2px;display:block"></span>
+      <span style="width:18px;height:2px;background:var(--deep);border-radius:2px;display:block"></span>
+      <span style="width:12px;height:2px;background:var(--deep);border-radius:2px;display:block;align-self:flex-start;margin-left:3px"></span>
     </button>
     <div class="topbar-title" id="pageTitle">Dashboard</div>
     <div class="global-search-wrap">
@@ -2847,8 +2847,9 @@ function renderDashboard() {
     const males=data.filter(v=>v.gender&&v.gender.toLowerCase().startsWith('m')).length;
     const females=data.filter(v=>v.gender&&v.gender.toLowerCase().startsWith('f')).length;
     const gTot=males+females||1;
+    if (!srcData.length && !ageData.length) { srcEl.style.display='none'; } else { srcEl.style.display='';
     srcEl.innerHTML=`
-      <div class="dc-hdr" style="align-items:center"><div><div class="dc-title">Source & Demographics</div><div class="dc-sub">Hover rows for retention rate</div></div></div>
+      <div class="dc-hdr" style="align-items:center"><div><div class="dc-title">Source & Demographics</div><div class="dc-sub">How visitors found Petra</div></div></div>
       <div class="dc-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:10px">How They Found Petra</div>
           ${srcData.map(x=>`<div class="src-row" onmouseenter="showTip(event,'<b>${srcLabel(x.s)}</b><br>${x.tot} total · ${x.pct}% returned')" onmouseleave="hideTip()">
@@ -2875,7 +2876,8 @@ function renderDashboard() {
             </div>
           </div>
         </div>
-      </div>`;
+      </div>\`;
+    }
   }
 
   // ── PEAK MONTH CARD ──
