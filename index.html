@@ -29,13 +29,10 @@ body{font-family:'DM Sans','Outfit',sans-serif;background:var(--soft);color:var(
 .app{display:flex;min-height:100vh}
 
 /* ── SIDEBAR ── */
-.sidebar{width:268px;background:var(--deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow:hidden;scrollbar-width:thin;scrollbar-color:rgba(212,160,23,.2) transparent;transition:width .3s cubic-bezier(.4,0,.2,1)}
-.sidebar.collapsed{width:64px}
-.sidebar.collapsed .nav-item{justify-content:center;padding:12px 0;width:100%}
-.sidebar.collapsed .nav-icon{margin:0!important}
-.sidebar.collapsed .brand{align-items:center;padding:14px 0}
+.sidebar{width:268px;background:var(--deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(212,160,23,.2) transparent;transform:translateX(0);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sidebar.collapsed{transform:translateX(-268px)}
 .main{flex:1;margin-left:268px;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .3s cubic-bezier(.4,0,.2,1)}
-.main.expanded{margin-left:68px}
+.main.expanded{margin-left:0}
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(212,160,23,.2);border-radius:2px}
 
@@ -1115,9 +1112,6 @@ textarea{resize:vertical;min-height:80px}
     <div class="brand-sub">Visitor Records System</div>
   </div>
 
-  <button class="sidebar-collapse-btn" onclick="toggleSidebar()" id="sidebarCollapseBtn">
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 2L4 5l3 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
   <nav class="nav">
     <div class="nav-section-label">Menu</div>
     <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg></span><span class="sidebar-label">Dashboard</span></button>
@@ -1152,6 +1146,11 @@ textarea{resize:vertical;min-height:80px}
     </div>
   </div>
 </aside>
+
+<!-- Sidebar toggle button -->
+<button id="sidebarToggleBtn" onclick="toggleSidebar()" style="position:fixed;top:16px;left:280px;z-index:200;width:28px;height:28px;background:var(--deep);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:left .3s cubic-bezier(.4,0,.2,1)">
+  <svg id="sidebarToggleIcon" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
 
 <!-- ══ MAIN ══ -->
 <main class="main">
@@ -4605,25 +4604,29 @@ function toggleTeamUncontacted(btn) {
 
 // ── SIDEBAR COLLAPSE ──
 function toggleSidebar() {
-  const sb = document.querySelector('.sidebar');
+  const sb   = document.querySelector('.sidebar');
   const main = document.querySelector('.main');
+  const btn  = document.getElementById('sidebarToggleBtn');
+  const icon = document.getElementById('sidebarToggleIcon');
   const collapsed = sb.classList.toggle('collapsed');
   main.classList.toggle('expanded', collapsed);
-  // Hide/show all non-icon content directly
-  const toHide = sb.querySelectorAll('.brand-name,.brand-sub,.nav-section-label,.sidebar-label,.campus-bar,.sb-footer,.campus-label');
-  toHide.forEach(el => { el.style.display = collapsed ? 'none' : ''; });
+  // Move toggle button
+  if (btn) btn.style.left = collapsed ? '12px' : '280px';
+  // Flip arrow
+  if (icon) icon.style.transform = collapsed ? 'rotate(180deg)' : '';
   localStorage.setItem('ct_sidebar_collapsed', collapsed ? '1' : '0');
 }
 
 function initSidebar() {
+  const sb   = document.querySelector('.sidebar');
+  const main = document.querySelector('.main');
+  const btn  = document.getElementById('sidebarToggleBtn');
+  const icon = document.getElementById('sidebarToggleIcon');
   if (localStorage.getItem('ct_sidebar_collapsed') === '1') {
-    const sb = document.querySelector('.sidebar');
-    const main = document.querySelector('.main');
-    if (!sb) return;
-    sb.classList.add('collapsed');
+    sb?.classList.add('collapsed');
     main?.classList.add('expanded');
-    sb.querySelectorAll('.brand-name,.brand-sub,.nav-section-label,.sidebar-label,.campus-bar,.sb-footer,.campus-label')
-      .forEach(el => { el.style.display = 'none'; });
+    if (btn) btn.style.left = '12px';
+    if (icon) icon.style.transform = 'rotate(180deg)';
   }
 }
 
