@@ -1027,7 +1027,7 @@ textarea{resize:vertical;min-height:80px}
 .dash-greeting-service{font-size:11px;color:rgba(212,160,23,.8);margin-top:4px}
 
 /* KPI row v2 - 4 cards, cleaner */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
 .kpi-v2{background:var(--white);border-radius:16px;padding:18px 20px;border:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .kpi-v2:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
 .kpi-v2-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
@@ -1147,14 +1147,14 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </aside>
 
-<!-- Sidebar toggle button -->
-<button id="sidebarToggleBtn" onclick="toggleSidebar()" style="position:fixed;top:16px;left:280px;z-index:200;width:28px;height:28px;background:var(--deep);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:left .3s cubic-bezier(.4,0,.2,1)">
-  <svg id="sidebarToggleIcon" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</button>
-
 <!-- ══ MAIN ══ -->
 <main class="main">
   <header class="topbar">
+    <button onclick="toggleSidebar()" id="sidebarToggleBtn" style="width:36px;height:36px;border:1px solid var(--border);border-radius:10px;background:var(--white);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;transition:background .15s" title="Toggle menu">
+      <span id="sb-bar1" style="width:14px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s"></span>
+      <span id="sb-bar2" style="width:14px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s"></span>
+      <span id="sb-bar3" style="width:10px;height:2px;background:var(--deep);border-radius:2px;transition:all .2s;align-self:flex-start;margin-left:2px"></span>
+    </button>
     <div class="topbar-title" id="pageTitle">Dashboard</div>
     <div class="global-search-wrap">
       <div class="global-search-inner">
@@ -2589,6 +2589,32 @@ document.addEventListener('mousemove', e => {
   if (t && t.style.display==='block') { t.style.left=(e.clientX+12)+'px'; t.style.top=(e.clientY-32)+'px'; }
 });
 
+
+function renderDashGreeting(data, uncontactedFirst, total) {
+  const greetEl = document.getElementById('dashGreeting');
+  if (!greetEl) return;
+  const hrs = new Date().getHours();
+  const greetWord = hrs < 12 ? 'Good morning' : hrs < 17 ? 'Good afternoon' : 'Good evening';
+  const userName = currentUser || 'Team';
+  const dayStr = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const svcDay = new Date().getDay();
+  const svcLabel = svcDay===0?'☀️ Sunday Service':svcDay===3?'🌙 Wednesday Service':'Non-service day';
+  const uLen = uncontactedFirst ? uncontactedFirst.length : 0;
+  greetEl.innerHTML = `<div class="dash-greeting">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="dash-greeting-label">Petra Christian Centre · Lekki Campus</div>
+        <div class="dash-greeting-title">${greetWord}, ${userName}</div>
+        <div class="dash-greeting-sub">${(total||0).toLocaleString()} total visitors · ${uLen} need follow-up</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.8)">${dayStr}</div>
+        <div style="font-size:11px;color:rgba(212,160,23,.8);margin-top:3px">${svcLabel}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 // ── MAIN DASHBOARD ──
 function renderStats() { renderDashboard(); }
 function renderFirstCard() {}
@@ -2606,6 +2632,9 @@ function renderDashboard() {
   const contactedIds = new Set(contactLogs.map(l=>l.visitorId));
   const contacted = data.filter(v=>contactedIds.has(v.id)).length;
   const uncontactedFirst = first.filter(v=>!contactedIds.has(v.id));
+
+  // ── GREETING (always render first) ──
+  renderDashGreeting(data, uncontactedFirst, total);
 
   // ── INSIGHT BANNER ──
   const bannerEl = document.getElementById('dashInsightBanner');
@@ -4606,27 +4635,15 @@ function toggleTeamUncontacted(btn) {
 function toggleSidebar() {
   const sb   = document.querySelector('.sidebar');
   const main = document.querySelector('.main');
-  const btn  = document.getElementById('sidebarToggleBtn');
-  const icon = document.getElementById('sidebarToggleIcon');
   const collapsed = sb.classList.toggle('collapsed');
   main.classList.toggle('expanded', collapsed);
-  // Move toggle button
-  if (btn) btn.style.left = collapsed ? '12px' : '280px';
-  // Flip arrow
-  if (icon) icon.style.transform = collapsed ? 'rotate(180deg)' : '';
   localStorage.setItem('ct_sidebar_collapsed', collapsed ? '1' : '0');
 }
 
 function initSidebar() {
-  const sb   = document.querySelector('.sidebar');
-  const main = document.querySelector('.main');
-  const btn  = document.getElementById('sidebarToggleBtn');
-  const icon = document.getElementById('sidebarToggleIcon');
   if (localStorage.getItem('ct_sidebar_collapsed') === '1') {
-    sb?.classList.add('collapsed');
-    main?.classList.add('expanded');
-    if (btn) btn.style.left = '12px';
-    if (icon) icon.style.transform = 'rotate(180deg)';
+    document.querySelector('.sidebar')?.classList.add('collapsed');
+    document.querySelector('.main')?.classList.add('expanded');
   }
 }
 
