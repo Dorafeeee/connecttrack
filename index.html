@@ -115,6 +115,14 @@ body{font-family:'DM Sans','Outfit',sans-serif;background:var(--soft);color:var(
 /* ── PAGES ── */
 .page{display:none;padding:22px 24px;animation:fadeUp .25s ease}
 .page.active{display:block}
+/* Coming Soon overlay (Advanced Search) */
+.soon-wrap{position:relative;max-height:calc(100vh - 140px);overflow:hidden;border-radius:16px}
+.soon-blur{filter:blur(6px);opacity:.55;pointer-events:none;user-select:none}
+.soon-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.55))}
+.soon-card{max-width:420px;text-align:center;background:var(--white);border:1px solid var(--border);border-radius:20px;padding:30px 32px;box-shadow:0 18px 50px rgba(15,23,42,.14)}
+.soon-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#92400E;background:#FEF3C7;border:1px solid #FCD34D;border-radius:999px;padding:6px 14px;margin-bottom:14px}
+.soon-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--deep);margin-bottom:8px}
+.soon-sub{font-size:13px;line-height:1.6;color:var(--mid)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── STATS ── */
@@ -1557,6 +1565,8 @@ textarea{resize:vertical;min-height:80px}
 
   <!-- ── ADVANCED SEARCH ── -->
   <div class="page" id="page-search">
+   <div class="soon-wrap">
+    <div class="soon-blur" inert aria-hidden="true">
     <div class="adv-search-bar">
       <select class="adv-filter-select" id="advVisitType" onchange="runAdvSearch()">
         <option value="">Any visit type</option>
@@ -1621,6 +1631,15 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div id="advSearchResults"></div>
     </div>
+    </div>
+    <div class="soon-overlay">
+      <div class="soon-card">
+        <div class="soon-badge">Coming Soon</div>
+        <div class="soon-title">Advanced Search is on its way</div>
+        <div class="soon-sub">Filter visitors by visit type, source, age, Growth Track stage and more. Use the search bar at the top or All Records for now.</div>
+      </div>
+    </div>
+   </div>
   </div>
 </main>
 </div><!-- end .app -->
@@ -2088,13 +2107,16 @@ const CT_ROLE_MAP = {
   'mobisola@petra.ct':           { role:'team-member',   name:'Mobisola' },
   'nyen@petra.ct':               { role:'team-member',   name:'Nyen' },
   'fike@petra.ct':               { role:'team-member',   name:'Fike' },
-  'solape@petra.ct':             { role:'team-member',   name:'Solape' },
   'jumoke@petra.ct':             { role:'team-member',   name:'Jumoke' },
   'mercy@petra.ct':              { role:'team-member',   name:'Mercy' },
   'cynthia@petra.ct':            { role:'team-member',   name:'Cynthia' },
-  'precious@petra.ct':           { role:'team-member',   name:'Precious' },
-  'nosa@petra.ct':               { role:'team-member',   name:'Nosa' },
-  'preye@petra.ct':              { role:'team-member',   name:'Preye' },
+  'pamela@petra.ct':             { role:'team-member',   name:'Pamela' },
+  'daniel@petra.ct':             { role:'team-member',   name:'Daniel' },
+  'flourish@petra.ct':           { role:'team-member',   name:'Flourish' },
+  'kenny@petra.ct':              { role:'team-member',   name:'Kenny' },
+  'queenesther@petra.ct':        { role:'team-member',   name:'Queen Esther' },
+  'beatrice@petra.ct':           { role:'team-member',   name:'Beatrice' },
+  'abimbola@petra.ct':           { role:'team-member',   name:'Abimbola' },
 };
 
 // Shorthand usernames (so team members can type "doyinsola" instead of full email)
@@ -2103,10 +2125,12 @@ const CT_SHORTCUTS = {
   'pastor':'pastor@petra.ct', 'team':'team@petra.ct',
   'doyinsola':'doyinsola@petra.ct', 'mobisola':'mobisola@petra.ct',
   'nyen':'nyen@petra.ct', 'fike':'fike@petra.ct',
-  'solape':'solape@petra.ct', 'jumoke':'jumoke@petra.ct',
+  'jumoke':'jumoke@petra.ct',
   'mercy':'mercy@petra.ct', 'cynthia':'cynthia@petra.ct',
-  'precious':'precious@petra.ct', 'nosa':'nosa@petra.ct',
-  'preye':'preye@petra.ct'
+  'pamela':'pamela@petra.ct', 'daniel':'daniel@petra.ct',
+  'flourish':'flourish@petra.ct', 'kenny':'kenny@petra.ct',
+  'queenesther':'queenesther@petra.ct', 'beatrice':'beatrice@petra.ct',
+  'abimbola':'abimbola@petra.ct'
 };
 
 // Listen for auth state changes
@@ -2282,6 +2306,7 @@ function loadDataFromFirebase() {
     tasks       = toArr(d.tasks);
     nudges      = toArr(d.nudges);
     attendance  = toArr(d.attendance);
+    teamUpdateDone = !!(d.meta && d.meta.teamUpdateOct2026);
 
     // Only the team list gets a default; visitors are never seeded with sample data
     if (!teamMembers.length) {
@@ -3200,7 +3225,7 @@ function renderRecordsTable() {
       const svcColor = v.serviceDay==='sunday' ? 'var(--gold-dark)' : '#6D28D9';
       const svcBadge = svcLabel ? `<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:${svcLabel==='Sun'?'rgba(212,160,23,.12)':'rgba(109,40,217,.1)'};color:${svcColor};margin-left:4px">${svcLabel}</span>` : '';
       const assignedNames = (v.assignedMemberIds||[]).map(id=>teamMembers.find(m=>m.id===id)?.name.split(' ').slice(-1)[0]).filter(Boolean);
-      const assignedDisplay = assignedNames.length ? assignedNames : (v.assignedCallerName ? [v.assignedCallerName.split(' ')[0]] : []);
+      const assignedDisplay = assignedNames.length ? assignedNames : (v.formerAssignees||[]).length ? v.formerAssignees.map(n=>n.split(' ')[0]+' (former)') : (v.assignedCallerName ? [v.assignedCallerName.split(' ')[0]] : []);
       const isUncontactedRow = v.visitType==='first' && !contactedIds.has(v.id);
       const rowStyle = (isUncontactedRow && isUncontacted) || isAtRisk ? 'background:rgba(220,38,38,.04);border-left:3px solid #DC2626' : '';
       const contactCell = vLogs.length
@@ -3290,8 +3315,11 @@ function addTeamMember(e) {
   const d = new FormData(e.target);
   const m = { id:Date.now(), name:d.get('tmName').trim(), role:d.get('tmRole').trim(), phone:d.get('tmPhone')?.trim()||'', assign:d.get('tmAssign') };
   teamMembers.unshift(m);
+  const linked = linkMemberHistory(m);
   fbSave('teamMembers', teamMembers);
-  addAudit('U+','Team Member Added',`${m.name} (${m.role}) added to the team`);
+  if (linked.assigned) fbSave('visitors', visitors);
+  if (linked.logs) fbSave('contactLogs', contactLogs);
+  addAudit('U+','Team Member Added',`${m.name} (${m.role}) added to the team${linked.assigned?` — linked to ${linked.assigned} visitors from the sheets`:''}`);
   e.target.reset();
   renderTeamList();
   renderTeamPage();
@@ -3301,25 +3329,98 @@ function addTeamMember(e) {
 }
 
 function deleteTeamMember(id) {
-  if (!confirm('Remove this team member?')) return;
   const m = teamMembers.find(x=>x.id===id);
-  teamMembers = teamMembers.filter(m=>m.id!==id);
-  fbSave('teamMembers', teamMembers);
-
-  // Remove this member's ID from all visitor assignments
-  let visitorsChanged = false;
-  visitors = visitors.map(v => {
-    if (!v.assignedMemberIds || !v.assignedMemberIds.includes(id)) return v;
-    const updated = v.assignedMemberIds.filter(mid => mid !== id);
-    visitorsChanged = true;
-    return { ...v, assignedMemberIds: updated };
-  });
-  if (visitorsChanged) fbSave('visitors', visitors);
-
-  if (m) addAudit('U×','Team Member Removed',`${m.name} was removed from the team — assignments cleared`);
+  if (!m) return;
+  if (!confirm(`Remove ${m.name} from the team?\n\nVisitors they were assigned to will still show "${m.name}" as their former caller, and their call logs stay.`)) return;
+  const n = retireTeamMembers([id]);
+  addAudit('U×','Team Member Removed',`${m.name} was removed from the team — ${n} visitor record${n!==1?'s':''} keep them as former caller`);
   renderTeamList();
   refreshAll();
-  showToast('×','Member removed','Visitor assignments cleared');
+  showToast('×',`${m.name} removed`,'Assignment history kept');
+}
+
+// ── TEAM HISTORY HELPERS ──
+const ctPersonKey = s => String(s||'').toLowerCase().replace(/^(sis|bro|pastor|pst)\.?\s+/,'').replace(/[^a-z]/g,'');
+// Remove members but keep who handled whom: names move to v.formerAssignees, logs keep the caller's name.
+function retireTeamMembers(ids) {
+  const gone = teamMembers.filter(m=>ids.includes(m.id));
+  const nameOf = id => (gone.find(m=>m.id===id)||{}).name;
+  teamMembers = teamMembers.filter(m=>!ids.includes(m.id));
+  let touched = 0;
+  visitors = visitors.map(v => {
+    const hit = (v.assignedMemberIds||[]).filter(id=>ids.includes(id));
+    if (!hit.length) return v;
+    touched++;
+    const former = [...new Set([...(v.formerAssignees||[]), ...hit.map(nameOf).filter(Boolean)])];
+    return { ...v, assignedMemberIds: v.assignedMemberIds.filter(id=>!ids.includes(id)), formerAssignees: former };
+  });
+  contactLogs = contactLogs.map(l => ids.includes(l.memberId) ? { ...l, who: l.who || nameOf(l.memberId), memberId: null } : l);
+  tasks = tasks.map(t => ids.includes(t.memberId) ? { ...t, memberName: nameOf(t.memberId) } : t);
+  fbSave('teamMembers', teamMembers);
+  fbSave('visitors', visitors);
+  fbSave('contactLogs', contactLogs);
+  fbSave('tasks', tasks);
+  return touched;
+}
+// Link a (new) member to the visitors and call notes that already carry their name from the sheets.
+function linkMemberHistory(m) {
+  const key = ctPersonKey(m.name);
+  let assigned = 0, logs = 0;
+  visitors = visitors.map(v => {
+    const named = ctPersonKey(v.assignedCallerName) === key || (v.formerAssignees||[]).some(n=>ctPersonKey(n)===key);
+    if (!named || (v.assignedMemberIds||[]).includes(m.id)) return v;
+    assigned++;
+    return { ...v, assignedMemberIds: [...(v.assignedMemberIds||[]), m.id], formerAssignees: (v.formerAssignees||[]).filter(n=>ctPersonKey(n)!==key) };
+  });
+  const teamIds = new Set(teamMembers.map(t=>t.id));
+  contactLogs = contactLogs.map(l => (!teamIds.has(l.memberId) && ctPersonKey(l.who) === key) ? { ...l, memberId: m.id } : l);
+  contactLogs.forEach(l => { if (l.memberId === m.id) logs++; });
+  return { assigned, logs };
+}
+
+// One-off team update agreed in Oct 2026: retire callers with no 2026 activity, add the active callers who were missing.
+const TEAM_UPDATE_OCT2026 = {
+  remove: ['Precious','Nosa','Solape','Preye'],
+  add:    ['Pamela','Daniel','Flourish','Kenny','Queen Esther','Beatrice','Abimbola']
+};
+let teamUpdateDone = false;
+function pendingTeamUpdate() {
+  const has = n => teamMembers.some(m=>ctPersonKey(m.name)===ctPersonKey(n));
+  return { remove: TEAM_UPDATE_OCT2026.remove.filter(has), add: TEAM_UPDATE_OCT2026.add.filter(n=>!has(n)) };
+}
+function teamUpdateBannerHtml() {
+  if (teamUpdateDone || currentRole !== 'admin') return '';
+  const p = pendingTeamUpdate();
+  if (!p.remove.length && !p.add.length) return '';
+  return `<div style="border:1.5px solid var(--gold);background:#FFFBF2;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+    <div style="font-size:12px;line-height:1.6;color:var(--deep)">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#92400E;margin-bottom:4px">Team update ready</div>
+      ${p.remove.length?`<div><b>Remove</b> (no visitors assigned in 2026, or inactive since March): ${p.remove.join(', ')} — their visitors keep them as former caller</div>`:''}
+      ${p.add.length?`<div><b>Add</b> (calling 2026 visitors already): ${p.add.join(', ')} — linked to the visitors and call notes that carry their name</div>`:''}
+    </div>
+    <button class="btn btn-gold" onclick="applyTeamUpdate()">Apply team update</button>
+  </div>`;
+}
+function applyTeamUpdate() {
+  const p = pendingTeamUpdate();
+  if (!confirm(`Apply the team update?\n\nRemove: ${p.remove.join(', ')||'none'}\nAdd: ${p.add.join(', ')||'none'}`)) return;
+  const rmIds = teamMembers.filter(m=>p.remove.some(n=>ctPersonKey(n)===ctPersonKey(m.name))).map(m=>m.id);
+  const kept = rmIds.length ? retireTeamMembers(rmIds) : 0;
+  let base = Date.now(), linked = 0;
+  p.add.forEach((name, i) => {
+    const m = { id: base + i, name, role: 'Connect Team \u2014 Caller', phone: '', assign: 'both' };
+    teamMembers.push(m);
+    linked += linkMemberHistory(m).assigned;
+  });
+  fbSave('teamMembers', teamMembers);
+  fbSave('visitors', visitors);
+  fbSave('contactLogs', contactLogs);
+  if (fbDb && fbReady) fbDb.ref('connecttrack/meta/teamUpdateOct2026').set(new Date().toISOString());
+  teamUpdateDone = true;
+  addAudit('U+','Team Update',`Removed ${p.remove.join(', ')||'none'} (${kept} visitors keep them as former caller); added ${p.add.join(', ')||'none'} (${linked} visitors linked)`);
+  renderTeamList();
+  refreshAll();
+  showToast('✓','Team updated',`${p.add.length} added · ${p.remove.length} removed`);
 }
 
 // ── MEMBER PROFILE MODAL ──
@@ -3556,6 +3657,7 @@ function openVisitorModal(id) {
         <span style="font-size:10px;color:var(--mid)">${assignedIds.length} assigned</span>
       </div>
       <div style="font-size:11px;color:var(--mid);margin-bottom:10px">Tap a member to assign or unassign them to this visitor</div>
+      ${(v.formerAssignees||[]).length?`<div style="font-size:11px;color:var(--mid);margin-bottom:10px;padding:8px 10px;border-radius:8px;background:var(--soft)">Previously assigned to <b style="color:var(--deep)">${v.formerAssignees.join(', ')}</b> (no longer on the team)</div>`:''}
       ${assignedPickerHtml}
     </div>
     <div class="vm-log-section">
@@ -5449,6 +5551,9 @@ function renderTeamPage() {
   const sub = document.getElementById('teamPageSub');
   if (!el) return;
   if (sub) sub.textContent = `${teamMembers.length} member${teamMembers.length!==1?'s':''} in the follow-up team`;
+  let banner = document.getElementById('teamUpdateBanner');
+  if (!banner) { banner = document.createElement('div'); banner.id = 'teamUpdateBanner'; el.parentNode.insertBefore(banner, el); }
+  banner.innerHTML = teamUpdateBannerHtml();
   if (!teamMembers.length) {
     el.innerHTML=`<div class="empty-state card" style="padding:48px 20px"><div class="es-text">No team members yet — click "Add Team Member" to get started</div></div>`;
     return;
