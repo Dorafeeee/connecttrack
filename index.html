@@ -1102,8 +1102,11 @@ textarea{resize:vertical;min-height:80px}
 .donut-wrap{flex-wrap:wrap;justify-content:center}
 .donut-svg{flex-shrink:0;width:144px;height:144px}
 .donut-legend{min-width:150px}
-.bday-week-days{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+.bday-week-days{grid-template-columns:repeat(7,minmax(0,1fr))}
+@media (max-width:760px){.bday-week-days{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}}
 .bday-day{min-width:0}
+#dueTodayWidget:empty,#birthdayWidget:empty{display:none}
+#birthdayWidget .bday-week-card{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -1252,14 +1255,14 @@ textarea{resize:vertical;min-height:80px}
       <div class="dc" id="dashPeakCard"></div>
     </div>
 
-    <!-- Bento grid: Row C — MoM (wide) + birthday (narrow) -->
-    <div style="display:grid;grid-template-columns:1fr 360px;gap:14px;margin-bottom:14px;align-items:start">
+    <!-- Bento grid: Row C — MoM, then birthdays full width (7 days in one row) -->
+    <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px;align-items:start">
       <div class="dc" id="dashMomCard"></div>
       <div id="birthdayWidget"></div>
     </div>
 
     <!-- Bento grid: Row D — service split + growth + due today -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:14px;margin-bottom:14px;align-items:start">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px;align-items:start">
       <div class="dc" id="dashServiceSplitCard"></div>
       <div class="dc" id="dashGrowthCard"></div>
       <div id="dueTodayWidget"></div>
