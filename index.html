@@ -2780,7 +2780,7 @@ function renderDashboard() {
     const arcs=segs.map(seg=>{
       const dash=(seg.val/totalVal)*circ;
       const path=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${sw}"
-        stroke-dasharray="${dash-1.5} ${circ-dash+1.5}" stroke-dashoffset="${-offset+circ/4}"
+        stroke-dasharray="${Math.max(dash-1.5,2)} ${circ-Math.max(dash-1.5,2)}" stroke-dashoffset="${-offset+circ/4}"
         style="cursor:pointer;transition:stroke-width .15s"
         onmouseenter="showTip(event,'<b>${seg.label}</b><br>${seg.val} · ${Math.round(seg.val/totalVal*100)}%');this.setAttribute('stroke-width','${sw+3}')"
         onmouseleave="hideTip();this.setAttribute('stroke-width','${sw}')"/>`;
