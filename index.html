@@ -1680,6 +1680,13 @@ textarea{resize:vertical;min-height:80px}
         <input type="file" id="cleanImportInput" accept=".json,application/json" style="display:none" onchange="cleanImportSelected(event)">
         <div id="cleanImportStatus" style="font-size:12px;margin-top:12px;line-height:1.6"></div>
         <button class="btn btn-gold" id="cleanImportConfirm" style="display:none;margin-top:10px" onclick="confirmCleanImport()">Apply to live data</button>
+        <div style="border-top:1px solid #FCD34D;margin-top:16px;padding-top:14px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#92400E;margin-bottom:6px">Admin — Remove 2025 records</div>
+          <div style="font-size:12px;color:var(--mid);line-height:1.5;margin-bottom:10px">Deletes visitors with no visit in 2026, plus their call logs, visit history and tasks. People who also came in 2026 are kept, without their 2025 visits and calls. A backup downloads first.</div>
+          <button class="btn btn-outline" onclick="previewPurge2025()">Check 2025 records</button>
+          <div id="purgeStatus" style="font-size:12px;margin-top:10px;line-height:1.6"></div>
+          <button class="btn" id="purgeConfirm" style="display:none;margin-top:8px;background:#DC2626;color:#fff" onclick="confirmPurge2025()">Delete 2025 records</button>
+        </div>
       </div>
       <!-- Step 1: Service type -->
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);margin-bottom:8px">Step 1 — Select Service Type</div>
@@ -3942,6 +3949,9 @@ function openImportModal() {
   document.getElementById('cleanImportConfirm').style.display = 'none';
   setCleanStatus('');
   cleanImportPlan = null;
+  purgePlan = null;
+  document.getElementById('purgeStatus').innerHTML = '';
+  document.getElementById('purgeConfirm').style.display = 'none';
   document.getElementById('importModalOverlay').classList.add('open');
 }
 function closeImportModal(e) {
@@ -4363,6 +4373,98 @@ function confirmCleanImport() {
     fbPaused = false;
     btn.disabled = false; btn.textContent = 'Apply to live data';
     setCleanStatus('<span style="color:#DC2626">Save failed, nothing was changed: '+err.message+'</span>');
+  });
+}
+
+// ── REMOVE PRE-2026 RECORDS ──
+const PURGE_CUTOFF = '2026-01-01';
+let purgePlan = null;
+function ctIsoDay(v) {               // a record's date as YYYY-MM-DD, or '' if unknown
+  if (!v) return '';
+  const d = new Date(v);
+  return isNaN(d) ? '' : d.toISOString().slice(0,10);
+}
+function visitorFirstDay(v) { return ctIsoDay(v.dateRaw) || (v.date ? ctIsoDay(parseDateStr(v.date)) : ''); }
+
+function previewPurge2025() {
+  const st = document.getElementById('purgeStatus');
+  if (!fbDb || !fbReady) { st.innerHTML = '<span style="color:#DC2626">Live data is not loaded. Refresh and try again.</span>'; return; }
+  if (currentRole !== 'admin') { st.innerHTML = '<span style="color:#DC2626">Only an Admin can do this.</span>'; return; }
+  st.textContent = 'Checking live data…';
+  fbDb.ref('connecttrack').once('value').then(snap => {
+    const live = snap.val() || {};
+    const V = ctToArr(live.visitors), L = ctToArr(live.contactLogs), A = ctToArr(live.attendance), T = ctToArr(live.tasks);
+    const assim = live.assimilation || {};
+    const visits2026 = {};
+    A.forEach(a => { const d = ctIsoDay(a.date) || String(a.date||'').slice(0,10); if (d >= PURGE_CUTOFF) (visits2026[a.visitorId] = visits2026[a.visitorId] || []).push(d); });
+
+    const keep = [], removed = [], unknown = [];
+    let reanchored = 0;
+    V.forEach(v => {
+      const first = visitorFirstDay(v);
+      const later = [...(visits2026[v.id]||[]), ctIsoDay(v.secondVisitDate), ctIsoDay(v.lastVisitDate)].filter(d => d && d >= PURGE_CUTOFF).sort();
+      if (!first) { unknown.push(v); keep.push(v); return; }
+      if (first >= PURGE_CUTOFF) { keep.push(v); return; }
+      if (!later.length) { removed.push(v); return; }
+      // came in 2025 and again in 2026: keep the person, start their record at their first 2026 visit
+      const d0 = later[0];
+      const dt0 = new Date(d0 + 'T09:00:00.000Z');
+      keep.push({ ...v, dateRaw: dt0.toISOString(), date: dt0.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
+                  visitType: 'second', hasReturned: true,
+                  importFlags: [...new Set([...(v.importFlags||[]), 'Also visited in 2025 (2025 history removed)'])] });
+      reanchored++;
+    });
+    const goneIds = new Set(removed.map(v => v.id));
+    const dayOf = x => ctIsoDay(x.date) || String(x.date||'').slice(0,10);
+    const logs = L.filter(l => !goneIds.has(l.visitorId) && !(dayOf(l) && dayOf(l) < PURGE_CUTOFF));
+    const att  = A.filter(a => !goneIds.has(a.visitorId) && !(dayOf(a) && dayOf(a) < PURGE_CUTOFF));
+    const tasks2 = T.filter(t => !goneIds.has(t.visitorId));
+    const assim2 = {}; Object.keys(assim).forEach(k => { if (!goneIds.has(parseInt(k))) assim2[k] = assim[k]; });
+
+    purgePlan = { live, visitors: keep, contactLogs: logs, attendance: att, tasks: tasks2, assimilation: assim2,
+                  stats: { before: V.length, removed: removed.length, reanchored, unknown: unknown.length,
+                           logs: L.length - logs.length, att: A.length - att.length, tasks: T.length - tasks2.length, after: keep.length } };
+    const s = purgePlan.stats;
+    st.innerHTML = s.removed || s.logs || s.att
+      ? `<div><b>${s.removed.toLocaleString()}</b> visitors with no 2026 visit will be deleted</div>
+         <div>· <b>${s.reanchored}</b> people who also came in 2026 are kept (2025 visits and calls removed)</div>
+         <div>· <b>${s.logs.toLocaleString()}</b> call logs, <b>${s.att.toLocaleString()}</b> visit-history entries and <b>${s.tasks}</b> tasks from 2025 removed</div>
+         ${s.unknown?`<div>· <b>${s.unknown}</b> records have no readable date and are kept</div>`:''}
+         <div style="margin-top:6px">Visitors: ${s.before.toLocaleString()} → <b>${s.after.toLocaleString()}</b></div>`
+      : 'No 2025 records found — nothing to delete.';
+    document.getElementById('purgeConfirm').style.display = (s.removed || s.logs || s.att) ? 'inline-flex' : 'none';
+  }).catch(err => { st.innerHTML = '<span style="color:#DC2626">Could not read live data: '+err.message+'</span>'; });
+}
+
+function confirmPurge2025() {
+  const plan = purgePlan;
+  if (!plan) return;
+  if (!confirm(`Permanently delete ${plan.stats.removed} visitors from 2025 and their history?\n\nVisitors: ${plan.stats.before} → ${plan.stats.after}. A backup downloads first.`)) return;
+  try {
+    const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(plan.live)], { type: 'application/json' }));
+    a.download = `connecttrack-backup-before-2025-removal-${stamp}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) { if (!confirm('The backup download failed. Continue anyway?')) return; }
+  const btn = document.getElementById('purgeConfirm');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  fbPaused = true;
+  fbDb.ref('connecttrack').update({ visitors: plan.visitors, contactLogs: plan.contactLogs, attendance: plan.attendance,
+                                    tasks: plan.tasks, assimilation: plan.assimilation }).then(() => {
+    visitors = plan.visitors; contactLogs = plan.contactLogs; attendance = plan.attendance; tasks = plan.tasks;
+    window._assimCache = {}; Object.keys(plan.assimilation).forEach(k => { window._assimCache['assimilation_' + k] = plan.assimilation[k]; });
+    fbPaused = false;
+    const s = plan.stats;
+    addAudit('×','2025 Records Removed',`${s.removed} visitors with no 2026 visit deleted; ${s.reanchored} kept with 2025 history removed; ${s.logs} call logs and ${s.att} visit entries removed`);
+    purgePlan = null;
+    btn.disabled = false; btn.textContent = 'Delete 2025 records'; btn.style.display = 'none';
+    closeImportModal();
+    refreshAll();
+    showToast('✓','2025 records removed',`${s.after.toLocaleString()} visitors remain`);
+  }).catch(err => {
+    fbPaused = false; btn.disabled = false; btn.textContent = 'Delete 2025 records';
+    document.getElementById('purgeStatus').innerHTML = '<span style="color:#DC2626">Delete failed, nothing was changed: '+err.message+'</span>';
   });
 }
 
