@@ -1097,6 +1097,13 @@ textarea{resize:vertical;min-height:80px}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* v10 layout fixes: keep the donut whole and show all 7 birthday days on narrower screens */
+.donut-wrap{flex-wrap:wrap;justify-content:center}
+.donut-svg{flex-shrink:0;width:144px;height:144px}
+.donut-legend{min-width:150px}
+.bday-week-days{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+.bday-day{min-width:0}
 </style>
 </head>
 <body>
@@ -2782,7 +2789,7 @@ function renderDashboard() {
     donutEl.innerHTML=`
       <div class="dc-hdr"><div><div class="dc-title">Visitor Breakdown</div><div class="dc-sub">Hover segments for details</div></div></div>
       <div class="dc-body" style="padding-top:14px"><div class="donut-wrap">
-        <svg width="144" height="144"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--soft)" stroke-width="${sw}"/>${arcs}
+        <svg class="donut-svg" width="144" height="144" viewBox="0 0 144 144"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--soft)" stroke-width="${sw}"/>${arcs}
           <text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="Playfair Display,serif" font-size="22" font-weight="700" fill="var(--deep)">${total}</text>
           <text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="var(--mid)">TOTAL</text>
         </svg>
