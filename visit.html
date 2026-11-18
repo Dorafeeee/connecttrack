@@ -79,6 +79,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#fff
 .again{margin-top:20px;background:none;border:1.5px solid var(--line);border-radius:12px;padding:12px 18px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer}
 .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:18px}
 [hidden]{display:none!important}
+.banner{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border-radius:12px;padding:12px 14px;font-size:14px;margin:4px 0 16px;line-height:1.45}
+.banner.ok{background:#E8F6EF;color:var(--ok);align-items:center}
+.banner.warn{background:var(--gold-soft);color:#6B5409}
+.linkbtn{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--night);text-decoration:underline;cursor:pointer}
+#continueBtn{margin:0 0 6px}
+.row:has(> [hidden]){grid-template-columns:1fr}
+.gt-go{display:inline-block;margin-top:14px;padding:12px 18px;border-radius:12px;background:var(--night);color:#fff;font-weight:600;text-decoration:none}
 @media (max-width:380px){.row{grid-template-columns:1fr}.hero h1{font-size:30px}}
 </style>
 </head>
@@ -117,18 +124,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#fff
       <div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 
       <div class="sec">About you</div>
-      <div class="row">
-        <div class="f" data-req><label class="lbl" for="firstName">First name <span class="req">*</span></label><input type="text" id="firstName" name="firstName" autocomplete="given-name" maxlength="60"><div class="err">Please enter your first name</div></div>
-        <div class="f" data-req><label class="lbl" for="lastName">Surname <span class="req">*</span></label><input type="text" id="lastName" name="lastName" autocomplete="family-name" maxlength="60"><div class="err">Please enter your surname</div></div>
+      <div class="f" data-req><label class="lbl" for="phone">Phone number <span class="req">*</span> <span class="opt">(WhatsApp if possible)</span></label><input type="tel" id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="080 1234 5678" maxlength="20"><div class="err">Please enter a valid phone number</div></div>
+      <button type="button" class="submit" id="continueBtn" data-show="s-phone" onclick="checkNumber()">Continue</button>
+      <div class="banner ok" data-show="s-found s-many"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 9.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="foundText">We found you. Welcome back!</span></div>
+      <div class="banner warn" data-show="s-notfound"><span><b id="nfTitle">We couldn't find this number.</b> <span id="nfText">Maybe you used a different one last time? Otherwise, please fill in your details below.</span></span>
+        <button type="button" class="linkbtn" onclick="tryAnother()">Try another number</button></div>
+      <div class="row" data-show="first s-many s-notfound">
+        <div class="f" data-req data-show="first s-many s-notfound"><label class="lbl" for="firstName">First name <span class="req">*</span></label><input type="text" id="firstName" name="firstName" autocomplete="given-name" maxlength="60"><div class="err">Please enter your first name</div></div>
+        <div class="f" data-req data-show="first s-notfound"><label class="lbl" for="lastName">Surname <span class="req">*</span></label><input type="text" id="lastName" name="lastName" autocomplete="family-name" maxlength="60"><div class="err">Please enter your surname</div></div>
       </div>
-      <div class="f" data-req data-group="gender"><label class="lbl">Gender <span class="req">*</span></label>
+      <div class="f" data-req data-group="gender" data-show="first s-notfound"><label class="lbl">Gender <span class="req">*</span></label>
         <div class="chips"><label class="chip"><input type="radio" name="gender" value="Female"><span>Female</span></label><label class="chip"><input type="radio" name="gender" value="Male"><span>Male</span></label></div>
         <div class="err">Please choose one</div></div>
-      <div class="f" data-req><label class="lbl" for="phone">Phone number <span class="req">*</span> <span class="opt">(WhatsApp if possible)</span></label><input type="tel" id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="080 1234 5678" maxlength="20"><div class="err">Please enter a valid phone number</div></div>
-      <div class="f"><label class="lbl" for="email">Email <span class="opt">(optional)</span></label><input type="email" id="email" name="email" inputmode="email" autocomplete="email" maxlength="100"><div class="err">That email doesn't look right</div></div>
+      <div class="f" data-show="first s-notfound"><label class="lbl" for="email">Email <span class="opt">(optional)</span></label><input type="email" id="email" name="email" inputmode="email" autocomplete="email" maxlength="100"><div class="err">That email doesn't look right</div></div>
 
       <!-- First timer only -->
-      <div data-only="first">
+      <div data-show="first s-notfound">
         <div class="f" data-req data-group="ageGroup"><label class="lbl">Age range <span class="req">*</span></label>
           <div class="chips">
             <label class="chip"><input type="radio" name="ageGroup" value="13-20"><span>13–20</span></label>
@@ -164,25 +175,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#fff
       </div>
 
       <!-- Second timer only -->
-      <div data-only="second">
-        <div class="f" data-req data-group="employmentStatus"><label class="lbl">Employment status <span class="req">*</span></label>
-          <div class="chips">
-            <label class="chip"><input type="radio" name="employmentStatus" value="Employed"><span>Employed</span></label>
-            <label class="chip"><input type="radio" name="employmentStatus" value="Self-Employed"><span>Self-employed</span></label>
-            <label class="chip"><input type="radio" name="employmentStatus" value="Student"><span>Student</span></label>
-            <label class="chip"><input type="radio" name="employmentStatus" value="Unemployed"><span>Not working</span></label>
-          </div><div class="err">Please choose one</div></div>
+      <div data-show="s-found s-many s-notfound">
+        <div class="f" data-req data-group="backConfirm">
+          <div class="chips"><label class="chip"><input type="checkbox" name="backConfirm" value="yes"><span>I'm back for my second visit</span></label></div>
+          <div class="err">Please tick this to confirm</div></div>
       </div>
 
-      <div class="f" data-req data-group="growthTrack"><label class="lbl">Would you like to join Growth Track? <span class="req">*</span></label>
+      <div class="f" data-req data-group="growthTrack" data-show="first s-found s-many s-notfound"><label class="lbl">Would you like to join Growth Track? <span class="req">*</span></label>
         <div class="chips">
           <label class="chip"><input type="radio" name="growthTrack" value="yes"><span>Yes, I'm interested</span></label>
           <label class="chip"><input type="radio" name="growthTrack" value="no"><span>Not right now</span></label>
         </div><div class="err">Please choose one</div></div>
 
-      <button class="submit" type="submit" id="submitBtn">Submit</button>
+      <button class="submit" type="submit" id="submitBtn" data-show="first s-found s-many s-notfound">Submit</button>
       <div class="form-error" id="formError"></div>
-      <p class="note">Our connect team will reach out by phone or WhatsApp. Your details are only used by Petra to follow up with you.</p>
+      <p class="note" data-show="first s-found s-many s-notfound">Our connect team will reach out by phone or WhatsApp. Your details are only used by Petra to follow up with you.</p>
     </form>
   </section>
 
@@ -216,6 +223,47 @@ const params = new URLSearchParams(location.search);
 const campus = CAMPUSES[(params.get('campus')||'lekki').toLowerCase()] ? (params.get('campus')||'lekki').toLowerCase() : 'lekki';
 document.getElementById('campusName').textContent = CAMPUSES[campus];
 let type = null;
+let lookup = null;   // second timers: null (not checked yet) | 'found' | 'many' | 'notfound'
+const mode = () => type === 'first' ? 'first' : (lookup ? 's-' + lookup : 's-phone');
+function applyMode() {
+  const m = mode();
+  document.querySelectorAll('#stepForm [data-show]').forEach(el => { el.hidden = !el.dataset.show.split(' ').includes(m); });
+  if (type === 'first') document.querySelectorAll('[data-show]').forEach(el => { if (el.id === 'continueBtn') el.hidden = true; });
+}
+// Second timers: check the number against ConnectTrack's private phone index (found / not found only — no details leave the database)
+async function phoneKey(ph) {
+  const d = ph.replace(/\D/g, '').slice(-10);
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('petra-connecttrack|' + d));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function checkNumber() {
+  const input = document.getElementById('phone'), f = input.closest('.f');
+  const ph = digits(input.value);
+  if (ph.replace('+','').length < 10 || ph.replace('+','').length > 15) { f.classList.add('bad'); input.focus(); return; }
+  const btn = document.getElementById('continueBtn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  let count = 0, failed = false;
+  try {
+    if (!db) throw new Error('offline');
+    const key = await phoneKey(ph);
+    const snap = await Promise.race([
+      db.ref('connecttrack/phoneIndex/' + campus + '/' + key).once('value'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+    ]);
+    count = Number(snap.val()) || 0;
+  } catch (e) { console.warn('Lookup failed', e); failed = true; }
+  btn.disabled = false; btn.textContent = 'Continue';
+  lookup = count > 1 ? 'many' : count === 1 ? 'found' : 'notfound';
+  document.getElementById('foundText').textContent = count > 1
+    ? 'We found you. Welcome back! Just tell us your first name.' : 'We found you. Welcome back!';
+  document.getElementById('nfTitle').textContent = failed ? 'We couldn\u2019t check your number just now.' : 'We couldn\u2019t find this number.';
+  document.getElementById('nfText').textContent = failed ? 'Please fill in your details below.' : 'Maybe you used a different one last time? Otherwise, please fill in your details below.';
+  applyMode();
+}
+function tryAnother() {
+  lookup = null; applyMode();
+  const p = document.getElementById('phone'); p.value = ''; p.focus();
+}
 
 // Birthday selects
 (() => {
@@ -229,6 +277,8 @@ let type = null;
   const f = e.target.closest('.f'); if (f) f.classList.remove('bad');
   document.getElementById('formError').style.display = 'none';
 }));
+document.getElementById('phone').addEventListener('input', () => { if (type === 'second' && lookup) { lookup = null; applyMode(); } });
+document.getElementById('phone').addEventListener('keydown', e => { if (e.key === 'Enter' && type === 'second' && !lookup) { e.preventDefault(); checkNumber(); } });
 document.getElementById('howChips').addEventListener('change', e => {
   const other = document.getElementById('howOther');
   other.hidden = e.target.value !== 'other';
@@ -242,14 +292,15 @@ function pick(t) {
   document.getElementById('stepDone').hidden = true;
   const hero = { null:['Welcome home',"We're so glad you're here. Tell us a little about you so we can stay in touch."],
                  first:['Welcome to Petra','We’re so glad you came. It takes about a minute.'],
-                 second:['Welcome back!','So good to see you again. Just a few quick details.'] }[t];
+                 second:['Welcome back!','So good to see you again. Just your number and a couple of taps.'] }[t];
   document.getElementById('heroTitle').textContent = hero[0];
   document.getElementById('heroSub').textContent = hero[1];
   if (!t) { history.replaceState(null, '', location.pathname + (campus !== 'lekki' ? '?campus=' + campus : '')); return; }
   const pill = document.getElementById('formPill');
   pill.textContent = t === 'first' ? 'First Timer' : 'Second Timer';
   pill.className = 'pill ' + t;
-  document.querySelectorAll('[data-only]').forEach(el => { el.hidden = el.dataset.only !== t; });
+  lookup = null;
+  applyMode();
   const q = new URLSearchParams(location.search); q.set('type', t);
   history.replaceState(null, '', location.pathname + '?' + q.toString());
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -263,14 +314,14 @@ function validate() {
   document.querySelectorAll('#visitForm .f').forEach(f => f.classList.remove('bad'));
   const fail = el => { const f = el.closest('.f'); f.classList.add('bad'); ok = false; firstBad = firstBad || f; };
   document.querySelectorAll('#visitForm [data-req]').forEach(f => {
-    if (f.closest('[data-only]') && f.closest('[data-only]').hidden) return;
+    if (f.closest('[hidden]')) return;
     if (f.dataset.group) { if (!document.querySelector(`#visitForm input[name="${f.dataset.group}"]:checked`)) fail(f.querySelector('input')); }
     else { const input = f.querySelector('input'); if (!input.value.trim()) fail(input); }
   });
   const ph = digits(val('phone'));
   if (ph && (ph.replace('+','').length < 10 || ph.replace('+','').length > 15)) fail(document.getElementById('phone'));
   const em = val('email');
-  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) fail(document.getElementById('email'));
+  if (em && !document.getElementById('email').closest('[hidden]') && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) fail(document.getElementById('email'));
   if (firstBad) firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
   return ok;
 }
@@ -278,6 +329,7 @@ function validate() {
 document.getElementById('visitForm').addEventListener('submit', async e => {
   e.preventDefault();
   const errBox = document.getElementById('formError'); errBox.style.display = 'none';
+  if (type === 'second' && !lookup) { checkNumber(); return; }
   if (!validate()) return;
   const btn = document.getElementById('submitBtn');
   const firstName = val('firstName');
@@ -290,12 +342,12 @@ document.getElementById('visitForm').addEventListener('submit', async e => {
     growthTrack: radio('growthTrack'),
     submittedAt: firebase.database.ServerValue.TIMESTAMP,
   };
-  if (type === 'first') Object.assign(sub, {
+  if (type === 'first' || lookup === 'notfound') Object.assign(sub, {
     ageGroup: radio('ageGroup'), maritalStatus: radio('maritalStatus'),
     dob: val('bDay') && val('bMonth') ? `${val('bDay')} ${val('bMonth')}` : (val('bMonth') || ''),
     address: val('address'), howHeard: how, serviceExperience: val('experience'), prayer: val('prayer'),
   });
-  else Object.assign(sub, { employmentStatus: radio('employmentStatus') });
+  if (type === 'second') sub.lookup = lookup;   // found / many / notfound — ConnectTrack fills the rest from their first visit
   Object.keys(sub).forEach(k => { if (sub[k] === '') delete sub[k]; });
   btn.disabled = true; btn.textContent = 'Sending…';
   try {
@@ -304,7 +356,7 @@ document.getElementById('visitForm').addEventListener('submit', async e => {
       db.ref('connecttrack/formSubmissions').push(sub),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000)),
     ]);
-    showDone(firstName);
+    showDone(firstName, sub.growthTrack === 'yes' && type === 'second');
   } catch (err) {
     console.error(err);
     errBox.textContent = 'Sorry, that didn’t go through. Please check your connection and try again, or let an usher know.';
@@ -312,20 +364,26 @@ document.getElementById('visitForm').addEventListener('submit', async e => {
   } finally { btn.disabled = false; btn.textContent = 'Submit'; }
 });
 
-function showDone(name) {
+const GT_LINK = 'https://bit.ly/m/GTClass';
+function showDone(name, toGrowthTrack) {
   document.getElementById('stepForm').hidden = true;
   document.getElementById('stepDone').hidden = false;
-  document.getElementById('doneTitle').textContent = `Thank you, ${name}!`;
+  document.getElementById('doneTitle').textContent = name ? `Thank you, ${name}!` : 'Thank you!';
   document.getElementById('doneText').textContent = type === 'first'
     ? 'Someone from our connect team will reach out to you this week. We hope to see you again soon.'
     : 'We’re glad you came back. Someone from our connect team will be in touch.';
   document.getElementById('heroTitle').textContent = type === 'first' ? 'You’re welcome here' : 'Great to have you back';
   document.getElementById('heroSub').textContent = 'Your details are in. See you again soon.';
+  if (toGrowthTrack) {
+    document.getElementById('doneText').innerHTML = 'Taking you to Growth Track registration now\u2026<br><a class="gt-go" href="https://bit.ly/m/GTClass">Go to Growth Track</a>';
+    setTimeout(() => { location.href = GT_LINK; }, 2000);
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function resetAll() {
   document.getElementById('visitForm').reset();
   document.getElementById('howOther').hidden = true;
+  lookup = null;
   pick(null);
 }
 

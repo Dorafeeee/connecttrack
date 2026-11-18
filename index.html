@@ -1107,6 +1107,9 @@ textarea{resize:vertical;min-height:80px}
 .bday-day{min-width:0}
 #dueTodayWidget:empty,#birthdayWidget:empty{display:none}
 #birthdayWidget .bday-week-card{margin-bottom:0}
+#loginsModalOverlay .f-group input,#loginsModalOverlay .f-group select{width:100%;box-sizing:border-box;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;color:var(--ink);font-family:inherit}
+#loginsModalOverlay .f-group input:focus,#loginsModalOverlay .f-group select:focus{outline:none;border-color:var(--gold)}
+#loginsModalOverlay .nl-check{text-transform:none;letter-spacing:0;font-weight:500}
 </style>
 </head>
 <body>
@@ -1437,6 +1440,10 @@ textarea{resize:vertical;min-height:80px}
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5a4.5 4.5 0 014.5 4.5v2.5l1 1.5h-11l1-1.5V6A4.5 4.5 0 017 1.5z" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 11.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3"/></svg>
           Send Reminders
         </button>
+        <button class="btn btn-outline" id="manageLoginsBtn" onclick="openLoginsModal()" style="display:none;align-items:center;gap:7px">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" stroke-width="1.3"/></svg>
+          Manage Logins
+        </button>
         <button class="btn btn-gold" onclick="openTeamModal()">+ Add Team Member</button>
       </div>
     </div>
@@ -1654,6 +1661,38 @@ textarea{resize:vertical;min-height:80px}
 </main>
 </div><!-- end .app -->
 
+
+<!-- ══ MANAGE LOGINS ══ -->
+<div class="modal-overlay" id="loginsModalOverlay" onclick="if(event.target===this)closeLoginsModal()">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Manage Logins</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:4px">Create sign-ins for new team members and switch off old ones</div>
+      </div>
+      <button class="modal-close" onclick="closeLoginsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="border:1.5px solid var(--gold);background:#FFFBF2;border-radius:14px;padding:16px;margin-bottom:18px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#92400E;margin-bottom:10px">Create a login</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="f-group"><label>Full name *</label><input id="nlName" placeholder="e.g. Tolu Adeyemi" oninput="suggestUsername()"></div>
+          <div class="f-group"><label>Username *</label><input id="nlUser" placeholder="e.g. tolu" oninput="this.dataset.touched=1"></div>
+          <div class="f-group"><label>Role</label><select id="nlRole"></select></div>
+          <div class="f-group"><label>Temporary password *</label>
+            <div style="display:flex;gap:6px"><input id="nlPass" style="flex:1"><button type="button" class="btn btn-outline" style="padding:6px 10px;font-size:11px" onclick="document.getElementById('nlPass').value=genTempPassword()">New</button></div></div>
+        </div>
+        <label class="nl-check" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);margin:6px 0 12px"><input type="checkbox" id="nlTeam" checked style="width:auto;height:auto"> Also add them to the follow-up team as a caller</label>
+        <button class="btn btn-gold" id="nlCreateBtn" onclick="createLogin()">Create login</button>
+        <div id="nlResult" style="margin-top:12px"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);margin-bottom:8px">All logins</div>
+      <div id="loginsList"></div>
+      <div style="font-size:11px;color:var(--mid);margin-top:12px;line-height:1.6">Forgotten password? Switch that login off and create a new one (for example <b>tolu2</b>). Passwords can't be reset from inside the app.</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeLoginsModal()">Close</button></div>
+  </div>
+</div>
 <!-- ══ USER NAME PROMPT ══ -->
 <div class="username-overlay" id="usernameOverlay">
   <div class="username-box">
@@ -2155,9 +2194,22 @@ if (!fbAuth) {
   // Firebase unavailable — show login, will retry when deployed
   document.addEventListener('DOMContentLoaded', () => showLoginPage());
 } else {
-fbAuth.onAuthStateChanged(user => {
+fbAuth.onAuthStateChanged(async user => {
   if (user) {
-    const mapping = CT_ROLE_MAP[user.email] || { role:'team-member', name: user.email.split('@')[0] };
+    // Logins created in the app live in connecttrack/userRoles; built-in ones in CT_ROLE_MAP
+    let dbRole = null;
+    try { dbRole = (await fbDb.ref('connecttrack/userRoles/' + ctEmailKey(user.email)).once('value')).val(); } catch (e) {}
+    if (dbRole && dbRole.active === false) {
+      await fbAuth.signOut();
+      const err = document.getElementById('loginError');
+      err.textContent = 'This login has been switched off. Please ask your Connect Head.';
+      err.style.display = 'block';
+      showLoginPage();
+      return;
+    }
+    const mapping = (dbRole && dbRole.role) ? { role: dbRole.role, name: dbRole.name || user.email.split('@')[0] }
+                  : (CT_ROLE_MAP[user.email] || { role:'team-member', name: user.email.split('@')[0] });
+    window._ctMapping = mapping;
     currentUser = mapping.name;
     currentRole = mapping.role;
     // Update role badge in topbar
@@ -2190,7 +2242,8 @@ async function doLogin() {
   const pass  = document.getElementById('loginPassword').value;
   const btn   = document.querySelector('.login-btn');
   // Accept shorthand (doyinsola → doyinsola@petra.ct) or full email
-  const resolvedEmail = CT_SHORTCUTS[email.toLowerCase()] || email;
+  const resolvedEmail = CT_SHORTCUTS[email.toLowerCase()] || (email.includes('@') ? email : email.toLowerCase() + '@petra.ct');
+  document.getElementById('loginError').textContent = 'Incorrect username or password. Please try again.';
   btn.textContent = 'Signing in…';
   btn.disabled = true;
   try {
@@ -2225,8 +2278,8 @@ function recordLoginHistory(firebaseUser) {
   if (!fbDb) return;
   const entry = {
     id: Date.now(),
-    name: CT_ROLE_MAP[firebaseUser.email]?.name || firebaseUser.email.split('@')[0],
-    role: CT_ROLE_MAP[firebaseUser.email]?.role || 'team-member',
+    name: (window._ctMapping||CT_ROLE_MAP[firebaseUser.email]||{}).name || firebaseUser.email.split('@')[0],
+    role: (window._ctMapping||CT_ROLE_MAP[firebaseUser.email]||{}).role || 'team-member',
     email: firebaseUser.email,
     time: new Date().toISOString(),
     timeShort: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
@@ -2301,6 +2354,38 @@ function timeAgo(date) {
 function fbSave(key, data) {
   if (!fbReady || !fbDb) return;
   fbDb.ref('connecttrack/' + key).set(data).catch(e => console.warn('Firebase write error:', e));
+  if (key === 'visitors') schedulePhoneIndexSync();
+}
+
+// ── PHONE INDEX for the public sign-in page ──
+// Stores only scrambled (SHA-256) phone numbers and how many records share each one, per campus,
+// so visit.html can say "found / not found" without ever seeing a name.
+let _phoneIdxTimer = null, _phoneIdxSig = null;
+async function ctPhoneKey(phone) {
+  const d = String(phone||'').replace(/\D/g, '').slice(-10);
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('petra-connecttrack|' + d));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function schedulePhoneIndexSync() { clearTimeout(_phoneIdxTimer); _phoneIdxTimer = setTimeout(syncPhoneIndex, 3000); }
+async function syncPhoneIndex() {
+  if (!fbReady || !fbDb || !fbAuth || !fbAuth.currentUser || !window.crypto || !crypto.subtle) return;
+  try {
+    const idx = {};
+    for (const v of visitors) {
+      const d = String(v.phone||'').replace(/\D/g, '');
+      if (d.length < 10) continue;
+      const c = v.campus || 'lekki', k = await ctPhoneKey(d);
+      (idx[c] = idx[c] || {})[k] = (idx[c][k] || 0) + 1;
+    }
+    const sig = JSON.stringify(idx);
+    if (_phoneIdxSig === null) {
+      const cur = (await fbDb.ref('connecttrack/phoneIndex').once('value')).val();
+      _phoneIdxSig = JSON.stringify(cur || {});
+    }
+    if (sig === _phoneIdxSig) return;
+    await fbDb.ref('connecttrack/phoneIndex').set(idx);
+    _phoneIdxSig = sig;
+  } catch (e) { console.warn('Phone index not updated:', e && e.message); }
 }
 
 function loadDataFromFirebase() {
@@ -2334,6 +2419,8 @@ function loadDataFromFirebase() {
 
     // Set up real-time listeners for live sync
     setupRealtimeListeners();
+    setupSubmissionListener();
+    schedulePhoneIndexSync();
 
     init();
   }).catch(e => {
@@ -3354,6 +3441,271 @@ function deleteTeamMember(id) {
   renderTeamList();
   refreshAll();
   showToast('×',`${m.name} removed`,'Assignment history kept');
+}
+
+
+
+// ── SELF SIGN-IN (visit.html) ──
+// Visitors submit to connecttrack/formSubmissions (write-only for the public).
+// Any signed-in staff app picks them up, claims each one, and turns it into a visitor + visit.
+let subsBusy = false, subsListening = false;
+function setupSubmissionListener() {
+  if (!fbDb || subsListening) return;
+  subsListening = true;
+  fbDb.ref('connecttrack/formSubmissions').on('value', snap => { processSubmissions(snap.val() || {}); },
+    err => console.warn('Sign-in inbox not readable yet:', err && err.message));
+}
+const lagosDay = ms => new Date(ms).toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });   // YYYY-MM-DD
+function pickCallerFor(kind) {
+  const pool = teamMembers.filter(m => !m.assign || m.assign === 'both' || m.assign === kind);
+  if (!pool.length) return null;
+  const since = Date.now() - 30*864e5;
+  const load = m => visitors.filter(v => (v.assignedMemberIds||[]).includes(m.id) && new Date(v.dateRaw||0).getTime() >= since).length;
+  return pool.slice().sort((a,b) => load(a) - load(b) || a.name.localeCompare(b.name))[0];
+}
+function mapHowHeard(s) {
+  s = String(s||'').toLowerCase();
+  if (!s) return 'other';
+  if (s.includes('instagram')) return 'instagram';
+  if (s.includes('youtube')) return 'youtube';
+  if (s.includes('facebook')) return 'facebook';
+  if (s.includes('twitter') || s === 'x') return 'twitter';
+  if (s.includes('open heaven')) return 'openheaven';
+  if (/friend|family|sister|brother|relative|colleague|member|invite|cousin|aunt|uncle/.test(s)) return 'family';
+  return 'other';
+}
+// Pure function: applies one submission to arrays (used inside transactions). Returns a summary or null if already applied.
+function applySubmission(id, s, vis, att) {
+  if (att.some(a => a && a.submissionId === id) || vis.some(v => v && v.createdFromSubmission === id)) return null;
+  const at = typeof s.submittedAt === 'number' ? s.submittedAt : Date.now();
+  const day = lagosDay(at);
+  const wd = new Date(day + 'T12:00:00Z').getUTCDay();
+  const service = wd === 0 ? 'sunday' : wd === 3 ? 'wednesday' : 'special';
+  const iso = day + 'T09:00:00.000Z';
+  const dateLong = new Date(iso).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const dateShort = new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  const phone10 = ctPhone10(s.phone);
+  const email = String(s.email||'').toLowerCase();
+  const probe = { firstName: s.firstName, lastName: s.lastName, gender: s.gender };
+  // Second timers sign in with phone + first name: one record on that number is them.
+  // Several records on one number (a family phone) → pick the one whose name fits.
+  const sameContact = vis.filter(v => v && v.campus === (s.campus||'lekki') &&
+      ((phone10.length === 10 && ctPhone10(v.phone) === phone10) || (email && String(v.email||'').toLowerCase() === email)));
+  const match = (s.type === 'second' && sameContact.length === 1) ? sameContact[0]
+              : sameContact.find(v => ctNamesCompatible(v, probe));
+  const fill = (v, k, val) => { if (val && !v[k]) v[k] = val; };
+  if (match) {
+    const sameDay = att.some(a => a && a.visitorId === match.id && String(a.date).slice(0,10) === day);
+    if (!sameDay) {
+      const label = (match.visitCount || 1) >= 2 || match.hasReturned ? 'Returning' : 'Second Timer';
+      att.push({ id: Date.now() + Math.floor(Math.random()*1e6), visitorId: match.id, date: day, dateShort, service, campus: match.campus,
+                 visitLabel: label, formType: s.type === 'second' ? 'Second Timer' : 'First Timer', source: 'self-signin', submissionId: id });
+      if (day > String(match.dateRaw||'').slice(0,10)) {
+        match.visitType = 'second'; match.hasReturned = true;
+        match.secondVisitDate = match.secondVisitDate || iso;
+        match.lastVisitDate = iso;
+        match.visitCount = (match.visitCount || 1) + 1;
+      }
+    }   // same-day repeat: no new visit, just fill in any missing details below
+    ['email','gender','ageGroup','maritalStatus','dob','address','employmentStatus','prayer','serviceExperience'].forEach(k => fill(match, k, k === 'email' ? email : s[k]));
+    if (s.growthTrack === 'yes') match.growthTrack = 'yes'; else fill(match, 'growthTrack', s.growthTrack);
+    return { kind: sameDay ? 'duplicate' : 'return', visitor: match, day, service, attEntry: sameDay ? null : att[att.length-1] };
+  }
+  const caller = pickCallerFor(s.type === 'second' ? 'second' : 'first');
+  const v = {
+    id: Date.now() + Math.floor(Math.random()*1e6), campus: s.campus || 'lekki',
+    firstName: s.firstName || '(No name)', lastName: s.lastName || '', phone: s.phone || 'N/A', email,
+    gender: s.gender || '', ageGroup: s.ageGroup || '', dob: s.dob || '', maritalStatus: s.maritalStatus || '',
+    address: s.address || '', city: '', state: '', country: 'Nigeria',
+    howHeard: s.howHeard || '', source: mapHowHeard(s.howHeard), employmentStatus: s.employmentStatus || '',
+    prayer: s.prayer || '', serviceExperience: s.serviceExperience || '', growthTrack: s.growthTrack || '',
+    visitType: s.type === 'second' ? 'second' : 'first', hasReturned: s.type === 'second',
+    serviceDay: service === 'special' ? '' : service, programType: service === 'special' ? 'other-program' : '',
+    date: dateLong, dateRaw: iso, lastVisitDate: iso, visitCount: 1,
+    assignedMemberIds: caller ? [caller.id] : [], assignedCallerName: caller ? caller.name : '',
+    selfSignedIn: true, createdFromSubmission: id,
+    importFlags: s.type === 'second' ? ['Signed in as a second timer, but their first visit isn’t in ConnectTrack'] : [],
+  };
+  vis.push(v);
+  att.push({ id: Date.now() + Math.floor(Math.random()*1e6), visitorId: v.id, date: day, dateShort, service, campus: v.campus,
+             visitLabel: s.type === 'second' ? 'Second Timer' : 'First Timer', formType: s.type === 'second' ? 'Second Timer' : 'First Timer',
+             source: 'self-signin', submissionId: id });
+  return { kind: 'new', visitor: v, caller, day, service, attEntry: att[att.length-1] };
+}
+async function processSubmissions(subs) {
+  if (subsBusy || !fbReady || !fbDb || !fbAuth || !fbAuth.currentUser) return;
+  const ids = Object.keys(subs).filter(id => subs[id] && (subs[id].firstName || subs[id].phone))
+                .sort((a,b) => (subs[a].submittedAt||0) - (subs[b].submittedAt||0));
+  if (!ids.length) return;
+  subsBusy = true;
+  const me = fbAuth.currentUser.email;
+  const done = [];
+  try {
+    for (const id of ids) {
+      // Claim it so two open apps never process the same sign-up
+      const ref = fbDb.ref('connecttrack/formSubmissions/' + id);
+      const claim = await ref.child('claim').transaction(c => (!c || (Date.now() - (c.at||0)) > 120000) ? { by: me, at: Date.now() } : undefined);
+      if (!claim.committed) continue;
+      const s = subs[id];
+      let summary = null, notReady = false;
+      // Visitors and visit history are updated in transactions so nothing typed meanwhile is overwritten
+      const vRes = await fbDb.ref('connecttrack/visitors').transaction(cur => {
+        notReady = false;
+        if (cur === null && visitors.length) { notReady = true; return; }   // cache not ready yet — retry later
+        const vis = ctToArr(cur), att = attendance.slice();
+        summary = applySubmission(id, s, vis, att);
+        return summary ? vis : undefined;
+      });
+      if (summary) {
+        if (summary.attEntry) {
+        const aRes = await fbDb.ref('connecttrack/attendance').transaction(cur => {
+          const att = ctToArr(cur);
+          if (att.some(a => a && a.submissionId === id)) return;
+          att.push(summary.attEntry);
+          return att;
+        });
+        attendance = ctToArr(aRes.snapshot.val());      // keep local copy current for the next sign-up in this batch
+        }
+        visitors = ctToArr(vRes.snapshot.val());
+        done.push(summary);
+      }
+      if (notReady && !summary) { await ref.child('claim').remove(); continue; }   // leave it in the inbox for the next pass
+      await ref.remove();
+    }
+  } catch (e) { console.warn('Sign-in processing stopped:', e && e.message); }
+  finally { subsBusy = false; }
+  if (!done.length) return;
+  const snap = await fbDb.ref('connecttrack/attendance').once('value'); attendance = ctToArr(snap.val());
+  done.forEach(d => {
+    const n = `${d.visitor.firstName} ${d.visitor.lastName}`.trim();
+    const svc = d.service === 'special' ? 'special program' : d.service;
+    addAudit('+', 'Self Sign-in', d.kind === 'new'
+      ? `${n} signed in as a ${d.visitor.visitType === 'second' ? 'Second' : 'First'} Timer (${svc})${d.caller ? ' — assigned to ' + d.caller.name : ''}`
+      : d.kind === 'return' ? `${n} signed in again (${svc}) — now a ${d.visitor.visitCount > 2 ? 'returning visitor' : 'Second Timer'}`
+      : `${n} signed in twice today — kept as one visit`);
+  });
+  refreshAll();
+  schedulePhoneIndexSync();
+  const fresh = done.filter(d => d.kind === 'new').length, back = done.filter(d => d.kind === 'return').length;
+  showToast('+', `${done.length} new sign-in${done.length > 1 ? 's' : ''}`, [fresh && `${fresh} new visitor${fresh>1?'s':''}`, back && `${back} returning`].filter(Boolean).join(' · ') || 'Duplicate sign-in merged');
+}
+
+// ── MANAGE LOGINS (Admin + Connect Head) ──
+const ctEmailKey = email => String(email||'').toLowerCase().replace(/\./g, ',');
+const canManageLogins = () => currentRole === 'admin' || currentRole === 'connect-head';
+const ROLE_LABELS = { admin:'Admin', 'connect-head':'Connect Head', 'team-member':'Team Member', pastor:'Pastor' };
+let ctUserRoles = {};
+
+function genTempPassword() {
+  const words = ['grace','light','faith','hope','peace','joy','zion','shalom','glory','mercy'];
+  return words[Math.floor(Math.random()*words.length)] + (Math.floor(Math.random()*9000)+1000);
+}
+function suggestUsername() {
+  const u = document.getElementById('nlUser');
+  if (u.dataset.touched) return;
+  u.value = (document.getElementById('nlName').value.trim().split(/\s+/)[0]||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+function openLoginsModal() {
+  if (!canManageLogins()) return;
+  const roleSel = document.getElementById('nlRole');
+  const roles = currentRole === 'admin' ? ['team-member','pastor','connect-head','admin'] : ['team-member','pastor'];
+  roleSel.innerHTML = roles.map(r=>`<option value="${r}">${ROLE_LABELS[r]}</option>`).join('');
+  ['nlName','nlUser'].forEach(id=>{ const el=document.getElementById(id); el.value=''; delete el.dataset.touched; });
+  document.getElementById('nlPass').value = genTempPassword();
+  document.getElementById('nlResult').innerHTML = '';
+  fbPaused = true;
+  document.getElementById('loginsModalOverlay').classList.add('open');
+  refreshLoginsList();
+}
+function closeLoginsModal() {
+  document.getElementById('loginsModalOverlay').classList.remove('open');
+  fbPaused = false;
+}
+function refreshLoginsList() {
+  const el = document.getElementById('loginsList');
+  el.innerHTML = '<div style="font-size:12px;color:var(--mid)">Loading…</div>';
+  fbDb.ref('connecttrack/userRoles').once('value').then(snap => {
+    ctUserRoles = snap.val() || {};
+    const rows = {};
+    Object.entries(CT_ROLE_MAP).forEach(([email, m]) => { rows[ctEmailKey(email)] = { email, name:m.name, role:m.role, active:true, builtIn:true }; });
+    Object.entries(ctUserRoles).forEach(([k, r]) => { rows[k] = { ...(rows[k]||{}), ...r }; });
+    const me = (fbAuth.currentUser && fbAuth.currentUser.email || '').toLowerCase();
+    const order = { admin:0, 'connect-head':1, pastor:2, 'team-member':3 };
+    const list = Object.entries(rows).sort((a,b)=>(order[a[1].role]-order[b[1].role]) || String(a[1].name).localeCompare(b[1].name));
+    el.innerHTML = '<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">' + list.map(([k, r]) => {
+      const user = String(r.email).replace('@petra.ct','');
+      const isMe = String(r.email).toLowerCase() === me;
+      const canToggle = !isMe && (currentRole === 'admin' || ['team-member','pastor'].includes(r.role));
+      const on = r.active !== false;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #F5EFE5;${on?'':'opacity:.55'}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--deep)">${r.name||user}${isMe?' <span style="font-size:10px;color:var(--mid)">(you)</span>':''}</div>
+          <div style="font-size:11px;color:var(--mid)">Username: <b>${user}</b> · ${ROLE_LABELS[r.role]||r.role}${r.createdBy?' · added by '+r.createdBy:''}</div>
+        </div>
+        <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;${on?'background:#DCFCE7;color:#166534':'background:#F3F4F6;color:#6B7280'}">${on?'Active':'Switched off'}</span>
+        ${canToggle?`<button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="setLoginActive('${k}',${!on})">${on?'Switch off':'Switch on'}</button>`:'<span style="width:84px"></span>'}
+      </div>`;
+    }).join('') + '</div>';
+  }).catch(err => { el.innerHTML = `<div style="font-size:12px;color:#DC2626">Could not load logins: ${err.message}</div>`; });
+}
+function setLoginActive(key, active) {
+  const existing = ctUserRoles[key];
+  const builtInEmail = Object.keys(CT_ROLE_MAP).find(e => ctEmailKey(e) === key);
+  const rec = existing || { email: builtInEmail, name: CT_ROLE_MAP[builtInEmail].name, role: CT_ROLE_MAP[builtInEmail].role, builtIn: true };
+  if (!active && !confirm(`Switch off the login for ${rec.name}? They won't be able to sign in until it's switched back on.`)) return;
+  fbDb.ref('connecttrack/userRoles/' + key).set({ ...rec, active, updatedBy: currentUser, updatedAt: new Date().toISOString() })
+    .then(() => { addAudit(active?'+':'×', active?'Login Switched On':'Login Switched Off', `${rec.name} (${String(rec.email).replace('@petra.ct','')})`); refreshLoginsList(); })
+    .catch(err => showToast('!','Could not update login', err.message));
+}
+async function createLogin() {
+  const name = document.getElementById('nlName').value.trim();
+  const user = document.getElementById('nlUser').value.trim().toLowerCase().replace(/[^a-z0-9.]/g,'');
+  const role = document.getElementById('nlRole').value;
+  const pass = document.getElementById('nlPass').value.trim();
+  const addTeam = document.getElementById('nlTeam').checked;
+  const out = document.getElementById('nlResult');
+  const fail = msg => { out.innerHTML = `<div style="font-size:12px;color:#DC2626">${msg}</div>`; };
+  if (!canManageLogins()) return fail('Only an Admin or Connect Head can create logins.');
+  if (!name || !user) return fail('Enter a name and a username.');
+  if (pass.length < 6) return fail('The password needs at least 6 characters.');
+  if (currentRole !== 'admin' && !['team-member','pastor'].includes(role)) return fail('Only an Admin can create that role.');
+  const email = user + '@petra.ct', key = ctEmailKey(email);
+  if (CT_ROLE_MAP[email] || ctUserRoles[key]) return fail(`The username "${user}" is already taken. Try ${user}2.`);
+  const btn = document.getElementById('nlCreateBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  let existed = false;
+  try {
+    // A second Firebase app creates the account without signing the Connect Head out
+    const sec = firebase.apps.find(a => a.name === 'ct-account-maker') || firebase.initializeApp(firebaseConfig, 'ct-account-maker');
+    try { await sec.auth().createUserWithEmailAndPassword(email, pass); }
+    catch (e) { if (e.code === 'auth/email-already-in-use') existed = true; else throw e; }
+    await sec.auth().signOut();
+    await fbDb.ref('connecttrack/userRoles/' + key).set({ email, name, role, active: true, createdBy: currentUser, createdAt: new Date().toISOString() });
+    let teamNote = '';
+    if (addTeam && role === 'team-member' && !teamMembers.some(m => ctPersonKey(m.name) === ctPersonKey(name))) {
+      const m = { id: Date.now(), name, role: 'Connect Team \u2014 Caller', phone: '', assign: 'both', loginEmail: email };
+      teamMembers.push(m);
+      const linked = linkMemberHistory(m);
+      fbSave('teamMembers', teamMembers);
+      if (linked.assigned) fbSave('visitors', visitors);
+      if (linked.logs) fbSave('contactLogs', contactLogs);
+      teamNote = ` and added to the team${linked.assigned?` (${linked.assigned} visitors already carry their name)`:''}`;
+    }
+    addAudit('U+','Login Created',`${name} — username ${user} (${ROLE_LABELS[role]})${teamNote}`);
+    const msg = `Hi ${name.split(' ')[0]}, your ConnectTrack login:\nLink: ${location.origin}\nUsername: ${user}\nPassword: ${existed ? '(your existing password)' : pass}`;
+    out.innerHTML = `<div style="border:1px solid #BBF7D0;background:#F0FDF4;border-radius:10px;padding:12px;font-size:12px;line-height:1.6;color:#166534">
+      <b>Login ready${teamNote}.</b>${existed?' This username already had an account, so its old password still applies.':''}<br>
+      Username: <b>${user}</b> · Password: <b>${existed?'unchanged':pass}</b>
+      <div style="margin-top:8px"><button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick='navigator.clipboard.writeText(${JSON.stringify(msg)}).then(()=>showToast("✓","Copied","Paste it into WhatsApp"))'>Copy message to send them</button></div></div>`;
+    ['nlName','nlUser'].forEach(id=>{ const el=document.getElementById(id); el.value=''; delete el.dataset.touched; });
+    document.getElementById('nlPass').value = genTempPassword();
+    refreshLoginsList();
+    renderTeamPage();
+  } catch (e) {
+    fail(e.code === 'auth/weak-password' ? 'That password is too weak — use at least 6 characters.'
+       : e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message) ? 'The database rules don\'t allow this yet — ask the Admin to update the Firebase rules.'
+       : 'Could not create the login: ' + e.message);
+  } finally { btn.disabled = false; btn.textContent = 'Create login'; }
 }
 
 // ── TEAM HISTORY HELPERS ──
@@ -5663,6 +6015,7 @@ function renderTeamPage() {
   const sub = document.getElementById('teamPageSub');
   if (!el) return;
   if (sub) sub.textContent = `${teamMembers.length} member${teamMembers.length!==1?'s':''} in the follow-up team`;
+  const mlb = document.getElementById('manageLoginsBtn'); if (mlb) mlb.style.display = canManageLogins() ? 'flex' : 'none';
   let banner = document.getElementById('teamUpdateBanner');
   if (!banner) { banner = document.createElement('div'); banner.id = 'teamUpdateBanner'; el.parentNode.insertBefore(banner, el); }
   banner.innerHTML = teamUpdateBannerHtml();
