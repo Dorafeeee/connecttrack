@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Welcome to Petra Lekki</title>
+<meta name="description" content="Sign in as a first or second timer at Petra Christian Centre, Lekki.">
+<meta name="theme-color" content="#1B1340">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#1B1340;--night-2:#2A1B63;--violet:#5B2BD6;--violet-soft:#F1ECFF;
+  --navy:#16245C;--navy-soft:#E9EEFB;
+  --gold:#C9A227;--gold-deep:#9A7A12;--gold-soft:#FBF5E2;
+  --ink:#1F2433;--mid:#5D6475;--muted:#8A90A0;--line:#E3E5EC;--paper:#FFFFFF;--bg:#F6F5FA;
+  --danger:#C62828;--ok:#0F7B54;
+}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.45}
+.hero{background:radial-gradient(120% 90% at 85% 0%,#3B2484 0%,var(--night) 55%,#120C2C 100%);color:#fff;padding:34px 20px 72px;text-align:center;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto -20% -60px -20%;height:120px;background:var(--bg);border-radius:50% 50% 0 0}
+.mark{display:inline-flex;align-items:center;gap:10px;margin-bottom:18px}
+.mark-name{font-family:'Playfair Display',serif;font-style:italic;font-size:26px;letter-spacing:.01em}
+.mark-sep{width:1px;height:20px;background:rgba(255,255,255,.35)}
+.mark-campus{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.rule{width:44px;height:3px;border-radius:3px;background:var(--gold);margin:0 auto 18px}
+.hero h1{font-family:'Playfair Display',serif;font-weight:700;font-size:34px;line-height:1.1;letter-spacing:-.01em}
+.hero p{margin-top:10px;color:rgba(255,255,255,.78);font-size:15px;max-width:340px;margin-left:auto;margin-right:auto}
+.wrap{max-width:520px;margin:-46px auto 0;padding:0 16px 48px;position:relative;z-index:2}
+.card{background:var(--paper);border-radius:22px;box-shadow:0 10px 40px rgba(27,19,64,.10),0 1px 3px rgba(27,19,64,.06);padding:22px 20px}
+.choose{display:grid;gap:12px}
+.choice{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--paper);border-radius:16px;padding:18px 16px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,transform .15s,box-shadow .15s}
+.choice:active{transform:scale(.99)}
+.choice:hover{border-color:var(--gold);box-shadow:0 4px 16px rgba(201,162,39,.15)}
+.choice-ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.choice.first .choice-ic{background:var(--violet-soft);color:var(--violet)}
+.choice.second .choice-ic{background:var(--navy-soft);color:var(--navy)}
+.choice-t{font-weight:700;font-size:17px}
+.choice-s{font-size:13px;color:var(--mid);margin-top:2px}
+.choice-arrow{margin-left:auto;color:var(--muted)}
+.form-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.back{border:none;background:var(--bg);width:36px;height:36px;border-radius:10px;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pill{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
+.pill.first{background:var(--violet-soft);color:var(--violet)}
+.pill.second{background:var(--navy-soft);color:var(--navy)}
+.sec{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.sec:first-of-type{margin-top:4px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f{margin-bottom:14px}
+.f label.lbl{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink)}
+.req{color:var(--gold-deep)}
+.opt{font-weight:400;color:var(--muted)}
+input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#FBFBFD;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;outline:none;transition:border-color .15s,background .15s;-webkit-appearance:none;appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%235D6475' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:10px 14px;border:1.5px solid var(--line);border-radius:999px;font-size:14px;cursor:pointer;background:#FBFBFD;transition:all .15s;user-select:none}
+.chip input:checked+span{border-color:var(--night);background:var(--night);color:#fff}
+.chip input:focus-visible+span{outline:2px solid var(--gold);outline-offset:2px}
+.err{display:none;font-size:12px;color:var(--danger);margin-top:6px}
+.f.bad .err{display:block}
+.f.bad input,.f.bad select{border-color:var(--danger)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.submit{width:100%;margin-top:8px;border:none;border-radius:14px;padding:16px;font:inherit;font-size:16px;font-weight:700;color:#1B1340;background:linear-gradient(135deg,#E4C14F,var(--gold));box-shadow:0 6px 18px rgba(201,162,39,.35);cursor:pointer}
+.submit:disabled{opacity:.6;cursor:wait}
+.note{font-size:12px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+.form-error{display:none;margin-top:12px;padding:12px 14px;border-radius:12px;background:#FDECEC;color:var(--danger);font-size:13px}
+.done{text-align:center;padding:12px 4px 6px}
+.done-ic{width:64px;height:64px;border-radius:50%;background:var(--gold-soft);color:var(--gold-deep);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.done h2{font-family:'Playfair Display',serif;font-size:28px;line-height:1.15}
+.done p{color:var(--mid);margin-top:10px;font-size:15px}
+.again{margin-top:20px;background:none;border:1.5px solid var(--line);border-radius:12px;padding:12px 18px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin-top:18px}
+[hidden]{display:none!important}
+.banner{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border-radius:12px;padding:12px 14px;font-size:14px;margin:4px 0 16px;line-height:1.45}
+.banner.ok{background:#E8F6EF;color:var(--ok);align-items:center}
+.banner.warn{background:var(--gold-soft);color:#6B5409}
+.linkbtn{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--night);text-decoration:underline;cursor:pointer}
+#continueBtn{margin:0 0 6px}
+.row:has(> [hidden]){grid-template-columns:1fr}
+.gt-go{display:inline-block;margin-top:14px;padding:12px 18px;border-radius:12px;background:var(--night);color:#fff;font-weight:600;text-decoration:none}
+@media (max-width:380px){.row{grid-template-columns:1fr}.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="mark"><span class="mark-name">Petra</span><span class="mark-sep"></span><span class="mark-campus" id="campusName">Lekki</span></div>
+  <div class="rule"></div>
+  <h1 id="heroTitle">Welcome home</h1>
+  <p id="heroSub">We're so glad you're here. Tell us a little about you so we can stay in touch.</p>
+</header>
+
+<main class="wrap">
+  <!-- Step 1: choose -->
+  <section class="card" id="stepChoose">
+    <div class="choose">
+      <button class="choice first" type="button" onclick="pick('first')">
+        <span class="choice-ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3.5l2.2 4.5 5 .7-3.6 3.5.9 4.9L11 14.8l-4.5 2.3.9-4.9-3.6-3.5 5-.7L11 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+        <span><span class="choice-t">It's my first time</span><span class="choice-s" style="display:block">First Timer</span></span>
+        <svg class="choice-arrow" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="choice second" type="button" onclick="pick('second')">
+        <span class="choice-ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11.5a7 7 0 0112.6-4.2M18 10.5a7 7 0 01-12.6 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16.8 3.5v3.8H13M5.2 18.5v-3.8H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span><span class="choice-t">I've been here before</span><span class="choice-s" style="display:block">Second Timer</span></span>
+        <svg class="choice-arrow" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Step 2: form -->
+  <section class="card" id="stepForm" hidden>
+    <div class="form-head">
+      <button class="back" type="button" onclick="pick(null)" aria-label="Back"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <span class="pill" id="formPill">First Timer</span>
+    </div>
+    <form id="visitForm" novalidate>
+      <div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+      <div class="sec">About you</div>
+      <div class="f" data-req><label class="lbl" for="phone">Phone number <span class="req">*</span> <span class="opt">(WhatsApp if possible)</span></label><input type="tel" id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="080 1234 5678" maxlength="20"><div class="err">Please enter a valid phone number</div></div>
+      <button type="button" class="submit" id="continueBtn" data-show="s-phone" onclick="checkNumber()">Continue</button>
+      <div class="banner ok" data-show="s-found s-many"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 9.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="foundText">We found you. Welcome back!</span></div>
+      <div class="banner warn" data-show="s-notfound"><span><b id="nfTitle">We couldn't find this number.</b> <span id="nfText">Maybe you used a different one last time? Otherwise, please fill in your details below.</span></span>
+        <button type="button" class="linkbtn" onclick="tryAnother()">Try another number</button></div>
+      <div class="row" data-show="first s-many s-notfound">
+        <div class="f" data-req data-show="first s-many s-notfound"><label class="lbl" for="firstName">First name <span class="req">*</span></label><input type="text" id="firstName" name="firstName" autocomplete="given-name" maxlength="60"><div class="err">Please enter your first name</div></div>
+        <div class="f" data-req data-show="first s-notfound"><label class="lbl" for="lastName">Surname <span class="req">*</span></label><input type="text" id="lastName" name="lastName" autocomplete="family-name" maxlength="60"><div class="err">Please enter your surname</div></div>
+      </div>
+      <div class="f" data-req data-group="gender" data-show="first s-notfound"><label class="lbl">Gender <span class="req">*</span></label>
+        <div class="chips"><label class="chip"><input type="radio" name="gender" value="Female"><span>Female</span></label><label class="chip"><input type="radio" name="gender" value="Male"><span>Male</span></label></div>
+        <div class="err">Please choose one</div></div>
+      <div class="f" data-show="first s-notfound"><label class="lbl" for="email">Email <span class="opt">(optional)</span></label><input type="email" id="email" name="email" inputmode="email" autocomplete="email" maxlength="100"><div class="err">That email doesn't look right</div></div>
+
+      <!-- First timer only -->
+      <div data-show="first s-notfound">
+        <div class="f" data-req data-group="ageGroup"><label class="lbl">Age range <span class="req">*</span></label>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="ageGroup" value="13-20"><span>13–20</span></label>
+            <label class="chip"><input type="radio" name="ageGroup" value="21-30"><span>21–30</span></label>
+            <label class="chip"><input type="radio" name="ageGroup" value="31-40"><span>31–40</span></label>
+            <label class="chip"><input type="radio" name="ageGroup" value="41-50"><span>41–50</span></label>
+            <label class="chip"><input type="radio" name="ageGroup" value="51+"><span>51+</span></label>
+          </div><div class="err">Please choose one</div></div>
+        <div class="f"><label class="lbl">Marital status <span class="opt">(optional)</span></label>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="maritalStatus" value="Single"><span>Single</span></label>
+            <label class="chip"><input type="radio" name="maritalStatus" value="Engaged"><span>Engaged</span></label>
+            <label class="chip"><input type="radio" name="maritalStatus" value="Married"><span>Married</span></label>
+          </div></div>
+        <div class="f"><label class="lbl">Birthday <span class="opt">(day and month)</span></label>
+          <div class="row"><select id="bDay" name="bDay" aria-label="Birthday day"><option value="">Day</option></select>
+          <select id="bMonth" name="bMonth" aria-label="Birthday month"><option value="">Month</option></select></div></div>
+        <div class="f"><label class="lbl" for="address">Where do you live? <span class="opt">(area is fine)</span></label><input type="text" id="address" name="address" autocomplete="street-address" placeholder="e.g. Ikate, Lekki" maxlength="160"></div>
+
+        <div class="sec">Your visit</div>
+        <div class="f"><label class="lbl">How did you hear about Petra?</label>
+          <div class="chips" id="howChips">
+            <label class="chip"><input type="radio" name="how" value="A friend or family member"><span>Friend or family</span></label>
+            <label class="chip"><input type="radio" name="how" value="Instagram"><span>Instagram</span></label>
+            <label class="chip"><input type="radio" name="how" value="YouTube"><span>YouTube</span></label>
+            <label class="chip"><input type="radio" name="how" value="Online / search"><span>Online / search</span></label>
+            <label class="chip"><input type="radio" name="how" value="Passing by"><span>Passing by</span></label>
+            <label class="chip"><input type="radio" name="how" value="other"><span>Other</span></label>
+          </div>
+          <input type="text" id="howOther" name="howOther" placeholder="Tell us more" maxlength="120" style="margin-top:10px" hidden></div>
+        <div class="f"><label class="lbl" for="experience">How was church today? <span class="opt">(optional)</span></label><textarea id="experience" name="experience" maxlength="600"></textarea></div>
+        <div class="f"><label class="lbl" for="prayer">Prayer request <span class="opt">(optional)</span></label><textarea id="prayer" name="prayer" maxlength="1000" placeholder="Only our pastoral and connect team will see this"></textarea></div>
+      </div>
+
+      <!-- Second timer only -->
+      <div data-show="s-found s-many s-notfound">
+        <div class="f" data-req data-group="backConfirm">
+          <div class="chips"><label class="chip"><input type="checkbox" name="backConfirm" value="yes"><span>I'm back for my second visit</span></label></div>
+          <div class="err">Please tick this to confirm</div></div>
+      </div>
+
+      <div class="f" data-req data-group="growthTrack" data-show="first s-found s-many s-notfound"><label class="lbl">Would you like to join Growth Track? <span class="req">*</span></label>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="growthTrack" value="yes"><span>Yes, I'm interested</span></label>
+          <label class="chip"><input type="radio" name="growthTrack" value="no"><span>Not right now</span></label>
+        </div><div class="err">Please choose one</div></div>
+
+      <button class="submit" type="submit" id="submitBtn" data-show="first s-found s-many s-notfound">Submit</button>
+      <div class="form-error" id="formError"></div>
+      <p class="note" data-show="first s-found s-many s-notfound">Our connect team will reach out by phone or WhatsApp. Your details are only used by Petra to follow up with you.</p>
+    </form>
+  </section>
+
+  <!-- Step 3: thank you -->
+  <section class="card" id="stepDone" hidden>
+    <div class="done">
+      <div class="done-ic"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M7 14.5l4.5 4.5L21 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2 id="doneTitle">Thank you!</h2>
+      <p id="doneText">Someone from our connect team will reach out to you this week.</p>
+      <button class="again" type="button" onclick="resetAll()">Sign in someone else</button>
+    </div>
+  </section>
+  <div class="foot">Petra Christian Centre</div>
+</main>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCT1mQtP2t7iDnbE0VDzzmV8o8Cvv6V3FQ",
+  authDomain: "connect-track-82e3d.firebaseapp.com",
+  databaseURL: "https://connect-track-82e3d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "connect-track-82e3d",
+  storageBucket: "connect-track-82e3d.firebasestorage.app",
+  messagingSenderId: "838104495018",
+  appId: "1:838104495018:web:14a40d7264becc804b31d3"
+};
+let db = null;
+try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch (e) { console.warn('Firebase unavailable', e); }
+
+const CAMPUSES = { lekki:'Lekki', ikeja:'Ikeja', abuja:'Abuja', ibadan:'Ibadan', ph:'Port Harcourt' };
+const params = new URLSearchParams(location.search);
+const campus = CAMPUSES[(params.get('campus')||'lekki').toLowerCase()] ? (params.get('campus')||'lekki').toLowerCase() : 'lekki';
+document.getElementById('campusName').textContent = CAMPUSES[campus];
+let type = null;
+let lookup = null;   // second timers: null (not checked yet) | 'found' | 'many' | 'notfound'
+const mode = () => type === 'first' ? 'first' : (lookup ? 's-' + lookup : 's-phone');
+function applyMode() {
+  const m = mode();
+  document.querySelectorAll('#stepForm [data-show]').forEach(el => { el.hidden = !el.dataset.show.split(' ').includes(m); });
+  if (type === 'first') document.querySelectorAll('[data-show]').forEach(el => { if (el.id === 'continueBtn') el.hidden = true; });
+}
+// Second timers: check the number against ConnectTrack's private phone index (found / not found only — no details leave the database)
+async function phoneKey(ph) {
+  const d = ph.replace(/\D/g, '').slice(-10);
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('petra-connecttrack|' + d));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function checkNumber() {
+  const input = document.getElementById('phone'), f = input.closest('.f');
+  const ph = digits(input.value);
+  if (ph.replace('+','').length < 10 || ph.replace('+','').length > 15) { f.classList.add('bad'); input.focus(); return; }
+  const btn = document.getElementById('continueBtn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  let count = 0, failed = false;
+  try {
+    if (!db) throw new Error('offline');
+    const key = await phoneKey(ph);
+    const snap = await Promise.race([
+      db.ref('connecttrack/phoneIndex/' + campus + '/' + key).once('value'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+    ]);
+    count = Number(snap.val()) || 0;
+  } catch (e) { console.warn('Lookup failed', e); failed = true; }
+  btn.disabled = false; btn.textContent = 'Continue';
+  lookup = count > 1 ? 'many' : count === 1 ? 'found' : 'notfound';
+  document.getElementById('foundText').textContent = count > 1
+    ? 'We found you. Welcome back! Just tell us your first name.' : 'We found you. Welcome back!';
+  document.getElementById('nfTitle').textContent = failed ? 'We couldn\u2019t check your number just now.' : 'We couldn\u2019t find this number.';
+  document.getElementById('nfText').textContent = failed ? 'Please fill in your details below.' : 'Maybe you used a different one last time? Otherwise, please fill in your details below.';
+  applyMode();
+}
+function tryAnother() {
+  lookup = null; applyMode();
+  const p = document.getElementById('phone'); p.value = ''; p.focus();
+}
+
+// Birthday selects
+(() => {
+  const d = document.getElementById('bDay'), m = document.getElementById('bMonth');
+  for (let i = 1; i <= 31; i++) d.insertAdjacentHTML('beforeend', `<option value="${i}">${i}</option>`);
+  ['January','February','March','April','May','June','July','August','September','October','November','December']
+    .forEach(n => m.insertAdjacentHTML('beforeend', `<option value="${n}">${n}</option>`));
+})();
+// Clear a field's error as soon as it's fixed
+['input','change'].forEach(ev => document.getElementById('visitForm').addEventListener(ev, e => {
+  const f = e.target.closest('.f'); if (f) f.classList.remove('bad');
+  document.getElementById('formError').style.display = 'none';
+}));
+document.getElementById('phone').addEventListener('input', () => { if (type === 'second' && lookup) { lookup = null; applyMode(); } });
+document.getElementById('phone').addEventListener('keydown', e => { if (e.key === 'Enter' && type === 'second' && !lookup) { e.preventDefault(); checkNumber(); } });
+document.getElementById('howChips').addEventListener('change', e => {
+  const other = document.getElementById('howOther');
+  other.hidden = e.target.value !== 'other';
+  if (!other.hidden) other.focus();
+});
+
+function pick(t) {
+  type = t;
+  document.getElementById('stepChoose').hidden = !!t;
+  document.getElementById('stepForm').hidden = !t;
+  document.getElementById('stepDone').hidden = true;
+  const hero = { null:['Welcome home',"We're so glad you're here. Tell us a little about you so we can stay in touch."],
+                 first:['Welcome to Petra','We’re so glad you came. It takes about a minute.'],
+                 second:['Welcome back!','So good to see you again. Just your number and a couple of taps.'] }[t];
+  document.getElementById('heroTitle').textContent = hero[0];
+  document.getElementById('heroSub').textContent = hero[1];
+  if (!t) { history.replaceState(null, '', location.pathname + (campus !== 'lekki' ? '?campus=' + campus : '')); return; }
+  const pill = document.getElementById('formPill');
+  pill.textContent = t === 'first' ? 'First Timer' : 'Second Timer';
+  pill.className = 'pill ' + t;
+  lookup = null;
+  applyMode();
+  const q = new URLSearchParams(location.search); q.set('type', t);
+  history.replaceState(null, '', location.pathname + '?' + q.toString());
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const val = name => { const f = document.getElementById('visitForm'); const el = f.elements[name]; if (!el) return ''; return (el.value || '').trim(); };
+const digits = s => s.replace(/[^\d+]/g, '');
+
+function validate() {
+  let ok = true, firstBad = null;
+  document.querySelectorAll('#visitForm .f').forEach(f => f.classList.remove('bad'));
+  const fail = el => { const f = el.closest('.f'); f.classList.add('bad'); ok = false; firstBad = firstBad || f; };
+  document.querySelectorAll('#visitForm [data-req]').forEach(f => {
+    if (f.closest('[hidden]')) return;
+    if (f.dataset.group) { if (!document.querySelector(`#visitForm input[name="${f.dataset.group}"]:checked`)) fail(f.querySelector('input')); }
+    else { const input = f.querySelector('input'); if (!input.value.trim()) fail(input); }
+  });
+  const ph = digits(val('phone'));
+  if (ph && (ph.replace('+','').length < 10 || ph.replace('+','').length > 15)) fail(document.getElementById('phone'));
+  const em = val('email');
+  if (em && !document.getElementById('email').closest('[hidden]') && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) fail(document.getElementById('email'));
+  if (firstBad) firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return ok;
+}
+
+document.getElementById('visitForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const errBox = document.getElementById('formError'); errBox.style.display = 'none';
+  if (type === 'second' && !lookup) { checkNumber(); return; }
+  if (!validate()) return;
+  const btn = document.getElementById('submitBtn');
+  const firstName = val('firstName');
+  if (val('website')) { showDone(firstName); return; }   // spam trap
+  const radio = n => (document.querySelector(`#visitForm input[name="${n}"]:checked`) || {}).value || '';
+  let how = radio('how'); if (how === 'other') how = val('howOther') || 'Other';
+  const sub = {
+    type, campus, firstName, lastName: val('lastName'), gender: radio('gender'),
+    phone: digits(val('phone')), email: val('email').toLowerCase(),
+    growthTrack: radio('growthTrack'),
+    submittedAt: firebase.database.ServerValue.TIMESTAMP,
+  };
+  if (type === 'first' || lookup === 'notfound') Object.assign(sub, {
+    ageGroup: radio('ageGroup'), maritalStatus: radio('maritalStatus'),
+    dob: val('bDay') && val('bMonth') ? `${val('bDay')} ${val('bMonth')}` : (val('bMonth') || ''),
+    address: val('address'), howHeard: how, serviceExperience: val('experience'), prayer: val('prayer'),
+  });
+  if (type === 'second') sub.lookup = lookup;   // found / many / notfound — ConnectTrack fills the rest from their first visit
+  Object.keys(sub).forEach(k => { if (sub[k] === '') delete sub[k]; });
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    if (!db) throw new Error('offline');
+    await Promise.race([
+      db.ref('connecttrack/formSubmissions').push(sub),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000)),
+    ]);
+    showDone(firstName, sub.growthTrack === 'yes' && type === 'second');
+  } catch (err) {
+    console.error(err);
+    errBox.textContent = 'Sorry, that didn’t go through. Please check your connection and try again, or let an usher know.';
+    errBox.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Submit'; }
+});
+
+const GT_LINK = 'https://bit.ly/m/GTClass';
+function showDone(name, toGrowthTrack) {
+  document.getElementById('stepForm').hidden = true;
+  document.getElementById('stepDone').hidden = false;
+  document.getElementById('doneTitle').textContent = name ? `Thank you, ${name}!` : 'Thank you!';
+  document.getElementById('doneText').textContent = type === 'first'
+    ? 'Someone from our connect team will reach out to you this week. We hope to see you again soon.'
+    : 'We’re glad you came back. Someone from our connect team will be in touch.';
+  document.getElementById('heroTitle').textContent = type === 'first' ? 'You’re welcome here' : 'Great to have you back';
+  document.getElementById('heroSub').textContent = 'Your details are in. See you again soon.';
+  if (toGrowthTrack) {
+    document.getElementById('doneText').innerHTML = 'Taking you to Growth Track registration now\u2026<br><a class="gt-go" href="https://bit.ly/m/GTClass">Go to Growth Track</a>';
+    setTimeout(() => { location.href = GT_LINK; }, 2000);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function resetAll() {
+  document.getElementById('visitForm').reset();
+  document.getElementById('howOther').hidden = true;
+  lookup = null;
+  pick(null);
+}
+
+// Deep link: visit.html?type=first or ?type=second skips the choice screen
+const startType = (params.get('type') || '').toLowerCase();
+if (startType === 'first' || startType === 'second') pick(startType);
+</script>
+</body>
+</html>
