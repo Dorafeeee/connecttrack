@@ -4594,6 +4594,8 @@ function buildCleanImportPlan(data) {
     };
 
     const usedExisting = new Set();
+    const fillOnly = data.meta && data.meta.mode === 'fill';   // update file: add new people/visits/notes, fill blanks only
+    const touched = new Set();
     const remap = {};          // duplicate existing id -> kept id
     const outV = [];
     let idSeq = Date.now(), updated = 0, added = 0, dupFolded = 0;
@@ -4602,6 +4604,9 @@ function buildCleanImportPlan(data) {
     data.people.forEach(p => {
       const phones = [p.phone, ...(p.otherPhones||[])].map(ctPhone10).filter(x => x.length === 10);
       const emails = [p.email, ...(p.otherEmails||[])].map(e => (e||'').toLowerCase()).filter(Boolean);
+      // A record imported earlier from THIS same file under another ID belongs to someone else; records from other files can match.
+      const batchOf = id => String(id||'').split('-')[0];
+      const sameBatchOther = v => v.importId && batchOf(v.importId) === batchOf(p.importId) && v.importId !== p.importId;
       const cands = new Map(), viaEmail = new Set();
       const prior = byImportId[p.importId];          // already imported from this file before
       if (prior && !usedExisting.has(prior.id)) cands.set(prior.id, prior);
@@ -4609,7 +4614,7 @@ function buildCleanImportPlan(data) {
       emails.forEach(em => (byEmail[em]||[]).forEach(v => { cands.set(v.id, v); viaEmail.add(v.id); }));
       // records whose phone was saved incomplete: fall back to an exact full-name match
       if (!cands.size) { const nk = nameKey(p); if (nk.includes(' ')) (byName[nk]||[]).filter(v => ctPhone10(v.phone).length < 10 || !phones.length).forEach(v => cands.set(v.id, v)); }
-      const matches = [...cands.values()].filter(v => !usedExisting.has(v.id) && (v === prior || (!(v.importId && v.importId !== p.importId) && ctNamesCompatible(v, p, viaEmail.has(v.id)))));
+      const matches = [...cands.values()].filter(v => !usedExisting.has(v.id) && (v === prior || (!sameBatchOther(v) && ctNamesCompatible(v, p, viaEmail.has(v.id)))));
       // a record from an earlier run of this file first, then an app-created record over an old sample one, then the oldest
       matches.sort((a,b) => ((b===prior) - (a===prior)) || (isSampleVisitorId(a.id) - isSampleVisitorId(b.id)) || (a.id - b.id));
       const keep = matches[0];
@@ -4618,7 +4623,18 @@ function buildCleanImportPlan(data) {
       Object.keys(fields).forEach(k => { const val = fields[k]; if (val !== '' && val !== null && !(Array.isArray(val) && !val.length)) clean[k] = val; });
       const callerId = memberFor(p.assignedCallerName);
       let rec;
-      if (keep) {
+      if (keep && fillOnly) {
+        // Update mode: never overwrite what's in ConnectTrack — only fill blanks. Visit fields are recalculated below.
+        rec = { ...keep };
+        const SKIP = ['date','dateRaw','visitType','hasReturned','secondVisitDate','lastVisitDate','visitCount','serviceDay','programType','importId','assignedCallerName','importFlags'];
+        Object.keys(clean).forEach(k => { if (SKIP.includes(k)) return; const cur = rec[k];
+          if (cur === undefined || cur === null || cur === '' || cur === 'N/A' || cur === '(No name)' || (Array.isArray(cur) && !cur.length)) rec[k] = clean[k]; });
+        if (!(rec.assignedMemberIds||[]).length && callerId) rec.assignedMemberIds = [callerId];
+        if (!rec.assignedCallerName && clean.assignedCallerName) rec.assignedCallerName = clean.assignedCallerName;
+        usedExisting.add(keep.id);
+        touched.add(keep.id);
+        updated++;
+      } else if (keep) {
         rec = { ...keep, ...clean, id: keep.id };
         rec.assignedMemberIds = [...new Set([...(keep.assignedMemberIds||[]), ...(callerId ? [callerId] : [])])];
         if (keep.isWorker) rec.isWorker = true;
@@ -4630,6 +4646,8 @@ function buildCleanImportPlan(data) {
         updated++;
       } else {
         rec = { ...clean, id: idSeq++, assignedMemberIds: callerId ? [callerId] : [] };
+        if (!callerId && p.assignedCallerName) rec.formerAssignees = [p.assignedCallerName];
+        if (fillOnly) touched.add(rec.id);
         added++;
       }
       rec.firstName = rec.firstName || '(No name)';
@@ -4645,7 +4663,7 @@ function buildCleanImportPlan(data) {
     const retiredList = [];
     exV.forEach(v => {
       if (usedExisting.has(v.id)) return;
-      if (isSampleVisitorId(v.id) && !active.has(v.id)) { retired++; retiredList.push(v); return; }
+      if (!fillOnly && isSampleVisitorId(v.id) && !active.has(v.id)) { retired++; retiredList.push(v); return; }
       outV.push(v); keptOther++;
     });
     const fix = id => remap[id] !== undefined ? remap[id] : id;
@@ -4681,18 +4699,45 @@ function buildCleanImportPlan(data) {
       visitsAdded++;
     }));
 
+    if (fillOnly) {
+      const byV = {};
+      outAtt.forEach(a => { if (touched.has(a.visitorId) && !a.duplicate) (byV[a.visitorId] = byV[a.visitorId] || []).push(a); });
+      const iso = d => d + 'T09:00:00.000Z';
+      const longD = d => new Date(iso(d)).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+      outV.forEach(v => {
+        const list = (byV[v.id] || []).sort((a,b) => String(a.date).localeCompare(String(b.date)));
+        if (!list.length) return;
+        const days = [...new Set(list.map(a => String(a.date).slice(0,10)))];
+        const cur0 = String(v.dateRaw||'').slice(0,10);
+        const first = cur0 && cur0 < days[0] ? cur0 : days[0];
+        v.dateRaw = iso(first); v.date = longD(first);
+        const wd = new Date(iso(first)).getUTCDay();
+        if (!v.serviceDay && !v.programType) v.serviceDay = wd === 0 ? 'sunday' : wd === 3 ? 'wednesday' : '';
+        v.lastVisitDate = iso(days[days.length-1] > String(v.lastVisitDate||'').slice(0,10) ? days[days.length-1] : String(v.lastVisitDate).slice(0,10));
+        v.visitCount = Math.max(v.visitCount || 1, days.length);
+        const startsAsSecond = list[0].visitLabel === 'Second Timer' && list[0].formType === 'Second Timer';
+        if (days.length > 1 || startsAsSecond || v.visitType === 'second') {
+          v.visitType = 'second'; v.hasReturned = true;
+          if (!v.secondVisitDate) v.secondVisitDate = iso(startsAsSecond ? days[0] : (days[1] || days[0]));
+        } else if (!v.visitType) v.visitType = 'first';
+        // relabel this person's visits in date order
+        let n = 0, seen = new Set();
+        list.forEach(a => { const d = String(a.date).slice(0,10); if (seen.has(d)) return; seen.add(d);
+          a.visitLabel = (n === 0) ? (startsAsSecond ? 'Second Timer' : 'First Timer') : (n === 1 && !startsAsSecond ? 'Second Timer' : 'Returning'); n++; });
+      });
+    }
     const outTasks = exTasks.map(t => ({ ...t, visitorId: fix(t.visitorId) }));
     const outAssim = {};
     Object.keys(exAssim).forEach(k => { const nk = fix(parseInt(k)); if (!outAssim[nk]) outAssim[nk] = exAssim[k]; });
 
     cleanImportPlan = { live, visitors: outV, contactLogs: outLogs, attendance: outAtt, tasks: outTasks, assimilation: outAssim,
-                        remap, assimChanged: Object.keys(remap).some(k => exAssim[k]), retiredList,
+                        remap, fillOnly, assimChanged: Object.keys(remap).some(k => exAssim[k]), retiredList,
                         stats: { file: data.people.length, updated, added, dupFolded, retired, keptOther, sampleLogsRemoved, notesAdded, visitsAdded,
                                  before: exV.length, after: outV.length } };
     const s = cleanImportPlan.stats;
     setCleanStatus(`
       <div><b>${s.file.toLocaleString()}</b> people in the cleaned file</div>
-      <div>· <b>${s.updated.toLocaleString()}</b> match records already in ConnectTrack (updated, team activity kept)</div>
+      <div>· <b>${s.updated.toLocaleString()}</b> match records already in ConnectTrack (${fillOnly ? 'only blank details filled in; nothing overwritten' : 'updated, team activity kept'})</div>
       <div>· <b>${s.added.toLocaleString()}</b> are new</div>
       <div>· <b>${s.dupFolded}</b> duplicate records merged into one</div>
       <div>· <b>${s.retired}</b> old sample / 2025 records retired (no team activity on them)</div>
